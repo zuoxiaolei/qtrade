@@ -17,7 +17,7 @@ columns = ['股票代码', '股票名称', '股票规模',
            '日期', '价格', 'rsrs指标',
            '昨天rsrs指标', 'rsrs买入阈值',
            'rsrs卖出阈值', '买卖信号']
-mysql_conn = st.experimental_connection('mysql', type='sql', ttl=ttl)
+mysql_conn = st.connection('mysql', type='sql', ttl=ttl)
 max_date_sql = '''
                 select max(date) date 
                 from etf.ods_etf_history
