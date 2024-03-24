@@ -1,0 +1,51 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Run etf every hour
+
+on:
+  schedule:
+    - cron: '0 */1 * * *'
+  workflow_dispatch:
+
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    environment:
+      name: qdata
+      url: https://github.com
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: 'pip' # caching pip dependencies
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: download file
+        run: |
+          git clone https://huggingface.co/ranson/bert_news_classify && mv bert_news_classify/bert_news_classify_fp16_onnxruntime.onnx src/qtrade/data
+
+      - name: run application
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_IP: ${{ secrets.MYSQL_IP }}
+        run: |
+          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/run.py run_every_day
+#      - name: git pull
+#        run: |
+#          git pull
+#      - uses: stefanzweifel/git-auto-commit-action@v4
+#        with:
+#          commit_message: auto update

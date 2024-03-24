@@ -1,0 +1,109 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qtrade"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+    { name = "zuoxiaolei", email = "1905561110@qq.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+    "akshare",
+    "pandas==1.5.3",
+    "pytz",
+    "easyquotation",
+    "scipy",
+    "tqdm",
+    "requests==2.28.2",
+    "retrying",
+    "psutil",
+    "pyspark==3.3.2",
+    "pyarrow",
+    "matplotlib",
+    "pymysql",
+    "SQLAlchemy==1.4.39",
+    "DBUtils",
+    "pyquery",
+    "emoji",
+    "beautifulsoup4==4.11.1",
+    "html5lib==1.1",
+    "streamlit==1.31.0",
+    "streamlit-echarts==0.4.0",
+    "empyrical==0.5.5",
+    "tushare",
+    "onnxruntime==1.17.0",
+    "torch",
+    "transformers==4.35.2",
+    "Riskfolio-Lib==5.0.1"
+]
+
+[project.urls]
+Documentation = "https://github.com/unknown/qtrade#readme"
+Issues = "https://github.com/unknown/qtrade/issues"
+Source = "https://github.com/unknown/qtrade"
+
+[tool.hatch.version]
+path = "src/qtrade/__about__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+    "coverage[toml]>=6.5",
+    "pytest",
+]
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "coverage run -m pytest {args:tests}"
+cov-report = [
+    "- coverage combine",
+    "coverage report",
+]
+cov = [
+    "test-cov",
+    "cov-report",
+]
+
+[[tool.hatch.envs.all.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[tool.hatch.envs.types]
+dependencies = [
+    "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/qtrade tests}"
+
+[tool.coverage.run]
+source_pkgs = ["qtrade", "tests"]
+branch = true
+parallel = true
+omit = [
+    "src/qtrade/__about__.py",
+]
+
+[tool.coverage.paths]
+qtrade = ["src/qtrade", "*/qtrade/src/qtrade"]
+tests = ["tests", "*/qtrade/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
