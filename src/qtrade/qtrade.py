@@ -35,16 +35,6 @@ def portfolio_strategy():
     '''
     df_portfolio = mysql_conn.query(sql, ttl=0)
 
-    sql_stock = '''
-    select code, t1.date, close rate
-    from etf.ods_etf_history t1
-    join (select distinct date from etf.ads_eft_portfolio_rpt) t2
-      on t1.date=t2.date
-    where code in ('518880', '512890', '159941') 
-              and t1.date>= '2019-01-21'
-    order by code, date
-    '''
-
     df_stock_dict = {'all': df_portfolio}
 
     min_date = df_portfolio.date.min()
@@ -115,29 +105,28 @@ def portfolio_strategy():
     df_portfolio = df_portfolio.reset_index(drop=True)
     df_portfolio["profit_str"] = df_portfolio["profit"].map(lambda x: str(round(100 * x, 3)) + "%")
 
-    df_portfolio_daily = df_portfolio[['date', 'profit_str']]
+    df_portfolio_daily = df_portfolio[['date', 'profit_str', "profit"]]
     df_portfolio_daily = df_portfolio_daily.sort_values("date", ascending=False)
-    df_portfolio_daily.columns = ['日期', '收益率']
     df_portfolio_daily = df_portfolio_daily.head(100)
 
     df_portfolio_month = df_portfolio
     df_portfolio_month["月份"] = df_portfolio["date"].map(lambda x: str(x[:7]))
     df_portfolio_month = df_portfolio_month.groupby("月份", as_index=False)["profit"].sum()
-    df_portfolio_month["profit_str"] = df_portfolio_month["profit"].map(lambda x: str(round(100 * x, 3)) + "%")
-    df_portfolio_month = df_portfolio_month[['月份', "profit_str"]]
-    df_portfolio_month.columns = ['月份', '收益率']
+    df_portfolio_month["收益率"] = df_portfolio_month["profit"].map(lambda x: str(round(100 * x, 3)) + "%")
     df_portfolio_month = df_portfolio_month.sort_values(by="月份", ascending=False)
     st.markdown("### 每月收益率分析")
-    st.dataframe(df_portfolio_month, hide_index=True, width=width, height=300)
+    st.bar_chart(df_portfolio_month.head(12), x='月份', y='profit')
+    st.dataframe(df_portfolio_month[['月份', '收益率']], hide_index=True, width=width, height=300)
     st.markdown("### 每日收益率分析")
-    st.dataframe(df_portfolio_daily, hide_index=True, width=width, height=300)
+    st.bar_chart(df_portfolio_daily.head(12), x='date', y='profit')
+    st.dataframe(df_portfolio_daily[['date', 'profit_str']], hide_index=True, width=width, height=300)
 
 
 def get_hot_invest():
     sql = '''
     select date, query, hotScore stock_score
     from github.baidu_hot_news
-    where date >= (select date from etf.dim_etf_trade_date where rn=7)
+    where date >= (select date from etf.dim_etf_trade_date where rn=7) and category in ('finance', 'stocks', 'politics')
     order by date desc, stock_score desc
     '''
     df_news = mysql_conn.query(sql, ttl=0)
