@@ -4,7 +4,10 @@ import streamlit as st
 import pymysql
 from streamlit_echarts import st_echarts
 import empyrical
+from easyquotation import use
 
+quotation = use('sina')
+portfolio_code = ['518880', '512890', '159941']
 pymysql.install_as_MySQLdb()
 
 is_local = False
@@ -25,8 +28,27 @@ max_date_sql = '''
 max_date = mysql_conn.query(max_date_sql, ttl=ttl).values.tolist()[0][0]
 
 
+def get_portfolio_realtime_data(stock_code):
+    realtime_dict = quotation.stocks(stock_code[1:])
+    all_increase_rate = [0] * len(stock_code)
+    for num, code in enumerate(stock_code):
+        if num > 0:
+            now = realtime_dict[code]['now']
+            close = realtime_dict[code]['close']
+            increase_rate = round((now / close - 1) * 100, 2)
+            all_increase_rate[num] = increase_rate
+
+    all_increase_rate[0] = (0.5 * all_increase_rate[1] +
+                            0.3 * all_increase_rate[2] +
+                            0.2 * all_increase_rate[3]
+                            )
+    all_increase_rate[0] = round(all_increase_rate[0], 2)
+    return all_increase_rate
+
+
 def portfolio_strategy():
     st.markdown("## 组合投资策略")
+
     # 筛选时间
     sql = '''
     select date, rate 
@@ -39,6 +61,11 @@ def portfolio_strategy():
 
     min_date = df_portfolio.date.min()
     max_date = df_portfolio.date.max()
+    all_increase_rate = get_portfolio_realtime_data(['all'] + portfolio_code)
+    st.metric(label='组合涨幅', value=max_date,
+              delta=str(all_increase_rate[0]) + "%",
+              delta_color="inverse"
+              )
     options = list(range(int(min_date[:4]), int(max_date[:4]) + 1))[::-1]
     options = [str(ele) for ele in options]
     options = ['all'] + options
