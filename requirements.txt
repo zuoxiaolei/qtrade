@@ -28,3 +28,4 @@ onnxruntime==1.17.0
 torch
 transformers==4.35.2
 Riskfolio-Lib==5.0.1
+pytdx

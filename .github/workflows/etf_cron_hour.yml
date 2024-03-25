@@ -43,6 +43,16 @@ jobs:
           MYSQL_IP: ${{ secrets.MYSQL_IP }}
         run: |
           MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/run.py run_every_day
+
+      - name: update micro index
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_IP: ${{ secrets.MYSQL_IP }}
+        run: |
+          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/run.py update_micro_index_data
+
 #      - name: git pull
 #        run: |
 #          git pull
