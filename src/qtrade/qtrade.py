@@ -8,6 +8,7 @@ from easyquotation import use
 
 quotation = use('sina')
 portfolio_code = ['518880', '512890', '159941']
+portfolio_name = ['黄金ETF', '红利ETF', '纳指ETF']
 pymysql.install_as_MySQLdb()
 
 is_local = False
@@ -62,13 +63,19 @@ def portfolio_strategy():
     min_date = df_portfolio.date.min()
     max_date = df_portfolio.date.max()
     all_increase_rate = get_portfolio_realtime_data(['all'] + portfolio_code)
+    increase_rate = all_increase_rate[1:]
+    increase_rate = [str(ele) + "%" for ele in increase_rate]
+    df_increase = pd.DataFrame(list(zip(portfolio_code, portfolio_name, increase_rate)),
+                               columns=['股票代码', '股票名称', '股票涨幅'])
     st.metric(label='组合涨幅', value=max_date,
               delta=str(all_increase_rate[0]) + "%",
               delta_color="inverse"
               )
+    st.dataframe(df_increase, hide_index=True, width=width, height=140)
     options = list(range(int(min_date[:4]), int(max_date[:4]) + 1))[::-1]
     options = [str(ele) for ele in options]
     options = ['all'] + options
+
     st.markdown("### 收益曲线")
     select_year = st.selectbox(label='年份', options=options)
     if select_year != 'all':
