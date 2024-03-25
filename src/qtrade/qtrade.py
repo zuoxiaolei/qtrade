@@ -200,7 +200,22 @@ order by t1.follow_pnl desc
     st.markdown(df_news.to_markdown(index=False), unsafe_allow_html=True)
 
 
-portfolio, hot_new, okex_strategy = st.tabs(["组合投资", "投资热点", "okex列表推荐"])
+def macro_strategy():
+    sql = '''
+    select date, close, 
+		   avg(close) over (order by date rows 4 preceding) avg5,
+			 avg(close) over (order by date rows 19 preceding) avg20
+    from stock.micro_index t
+    order by date desc
+    limit 100
+    '''
+    df_macro = mysql_conn.query(sql, ttl=0)
+    df_macro['is_bull'] = df_macro.apply(lambda x: int(x['avg5'] > x['avg20']), axis=1)
+    df_macro = df_macro[['date', 'is_bull']]
+    st.dataframe(df_macro, hide_index=True, width=width, height=1000)
+
+
+portfolio, hot_new, okex_strategy, small_strategy = st.tabs(["组合投资", "投资热点", "okex列表推荐", "小市值策略"])
 
 with portfolio:
     portfolio_strategy()
@@ -210,3 +225,6 @@ with hot_new:
 
 with okex_strategy:
     get_okex_list()
+
+with small_strategy:
+    macro_strategy()
