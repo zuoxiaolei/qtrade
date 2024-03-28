@@ -19,7 +19,7 @@ def get_available_connect():
 def update_micro_index_data():
     host, port = get_available_connect()
     api.connect(host, port)
-    data = api.get_index_bars(9, 1, '880823', 1, 500)
+    data = api.get_index_bars(9, 1, '880823', 0, 500)
     sql = '''replace into stock.micro_index values (%s, %s, %s, %s, %s, %s)'''
     df = pd.DataFrame(data)
     df1 = df[['datetime', 'open', 'close', 'high', 'low', 'vol']]
