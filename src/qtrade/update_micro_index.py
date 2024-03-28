@@ -1,4 +1,4 @@
-import sys
+import sys, os
 
 import pandas as pd
 from pytdx.config.hosts import hq_hosts
@@ -25,7 +25,7 @@ def update_micro_index_data():
     df1 = df[['datetime', 'open', 'close', 'high', 'low', 'vol']]
     df1['datetime'] = df1['datetime'].map(lambda x: x[:10])
     insert_table_by_batch(sql, df1.values.tolist(), batch_size=100)
-    sys.exit(0)
+    os._exit(0)
 
 
 if __name__ == '__main__':
