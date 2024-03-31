@@ -39,3 +39,12 @@ jobs:
           MYSQL_IP: ${{ secrets.MYSQL_IP }}
         run: |
           MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/update_micro_index.py
+
+      - name: update board index
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_IP: ${{ secrets.MYSQL_IP }}
+        run: |
+          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/concept_rotation.py
