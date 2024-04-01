@@ -17,10 +17,13 @@ def update_board_data():
     board_list = df_board_concept_name["板块名称"].unique().tolist()
     data = []
     for ele in tqdm(board_list):
-        df = ak.stock_board_concept_hist_em(symbol=ele, start_date=last_day,
-                                            end_date=now, adjust="")
-        df['name'] = ele
-        data.append(df)
+        try:
+            df = ak.stock_board_concept_hist_em(symbol=ele, start_date=last_day,
+                                                end_date=now, adjust="")
+            df['name'] = ele
+            data.append(df)
+        except:
+            continue
     df = pd.concat(data, axis=0)
     df = df[['日期', 'name', '收盘']]
 
