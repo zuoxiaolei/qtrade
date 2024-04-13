@@ -137,14 +137,32 @@ def get_portfolio_report():
     pandas_df['rate'] = pandas_df.apply(lambda x: np.dot(weight_list, x.tolist()), axis=1)
     pandas_df['rate_cum'] = pandas_df['rate'] / 100 + 1
     pandas_df['rate_cum'] = pandas_df['rate_cum'].cumprod()
-    data = list(zip(pandas_df.index.tolist(), pandas_df["rate_cum"].tolist()))
+    pandas_df["year"] = pandas_df.index.map(lambda x: x[:4])
+    pandas_df["month"] = pandas_df.index.map(lambda x: x[:7])
+    df_year = pandas_df[['year', 'rate']].groupby("year", as_index=False)["rate"].sum()
+    df_month = pandas_df[['month', 'rate']].groupby("month", as_index=False)["rate"].sum()
+
+    data = list(zip(pandas_df.index.tolist(), pandas_df["rate_cum"].tolist(),
+                    pandas_df["rate"].tolist()))
     last_day, last_day_profit = pandas_df.index[-1], pandas_df["rate"].iloc[-1]
     sql = '''
     replace into etf.ads_eft_portfolio_rpt
-    values (%s, %s)
+    values (%s, %s, %s)
     '''
     insert_table_by_batch(sql, data)
     send_ratation_message(last_day, last_day_profit)
+
+    sql = '''
+    replace into etf.ads_etf_portfolio_profit_summary
+    values (%s, 'year', %s)
+    '''
+    insert_table_by_batch(sql, df_year.values.tolist())
+
+    sql = '''
+    replace into etf.ads_etf_portfolio_profit_summary
+    values (%s, 'month', %s)
+    '''
+    insert_table_by_batch(sql, df_month.values.tolist())
 
 
 def run_every_day():
