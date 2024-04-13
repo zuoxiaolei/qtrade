@@ -4,9 +4,7 @@ from datetime import datetime
 
 tokens = [
     'b0b21688d4694f7999c301386ee90a0c',  # xiaolei
-    'a667be8c89e341348a854ee0707793c9',  # zhanglin
-    # '4b4b075475bc41e8a39704008677010f',  # peilin
-    # '44b351689de6492ab519a923e4c202da',  # jiayu
+    # 'a667be8c89e341348a854ee0707793c9',  # zhanglin
 ]
 tz = pytz.timezone('Asia/Shanghai')
 now = datetime.now(tz).strftime("%Y-%m-%d")
