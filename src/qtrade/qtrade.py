@@ -72,7 +72,8 @@ def portfolio_strategy():
     increase_year = mysql_conn.query(f'''select value 
                                               from etf.ads_etf_portfolio_profit_summary
                                                where date='{max_year}' ''', ttl=0)['value'].iloc[0]
-
+    increase_month = round(increase_month, 2)
+    increase_year = round(increase_year, 2)
     increase_rate = [str(ele) + "%" for ele in increase_rate]
     df_increase = pd.DataFrame(list(zip(portfolio_code, portfolio_name, increase_rate)),
                                columns=['股票代码', '股票名称', '股票涨幅'])
