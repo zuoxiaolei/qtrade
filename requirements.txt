@@ -29,8 +29,3 @@ torch
 transformers==4.35.2
 Riskfolio-Lib==5.0.1
 pytdx
-langchain==0.1.0
-langchain-experimental=="0.0.49"
-langchain-community=="0.0.12"
-langchain-openai=="0.0.2.post1"
-langchainhub=="0.1.14"
