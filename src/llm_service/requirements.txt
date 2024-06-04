@@ -1,0 +1,10 @@
+# python==3.12
+duckduckgo_search==5.3.1b1
+fastapi== 0.103.1
+gradio_client==0.16.0
+loguru==0.7.0
+pydantic==2.6.4
+sse-starlette==2.1.0
+uvicorn==0.29.0
+gunicorn==22.0.0
+aiohttp

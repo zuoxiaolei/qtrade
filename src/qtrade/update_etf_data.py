@@ -150,7 +150,6 @@ def get_portfolio_report():
     values (%s, %s, %s)
     '''
     insert_table_by_batch(sql, data)
-    send_ratation_message(last_day, last_day_profit)
 
     sql = '''
     replace into etf.ads_etf_portfolio_profit_summary
@@ -163,6 +162,7 @@ def get_portfolio_report():
     values (%s, 'month', %s)
     '''
     insert_table_by_batch(sql, df_month.values.tolist())
+    send_ratation_message(last_day, last_day_profit)
 
 
 def run_every_day():

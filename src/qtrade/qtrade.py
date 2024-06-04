@@ -65,6 +65,12 @@ def portfolio_strategy():
 
     all_increase_rate = get_portfolio_realtime_data(['all'] + portfolio_code)
     increase_rate = all_increase_rate[1:]
+    print(f'''select value 
+                                          from etf.ads_etf_portfolio_profit_summary
+                                           where date='{max_month}' ''')
+    print(mysql_conn.query(f'''select value 
+                                          from etf.ads_etf_portfolio_profit_summary
+                                           where date='{max_month}' ''', ttl=0))
     increase_month = mysql_conn.query(f'''select value 
                                           from etf.ads_etf_portfolio_profit_summary
                                            where date='{max_month}' ''', ttl=0)['value'].iloc[0]
