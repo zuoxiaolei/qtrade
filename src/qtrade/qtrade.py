@@ -5,6 +5,7 @@ import pymysql
 from streamlit_echarts import st_echarts
 import empyrical
 from easyquotation import use
+from nn_strategy_app import nn_strategy
 
 quotation = use('sina')
 portfolio_code = ['518880', '512890', '159941']
@@ -16,11 +17,7 @@ ttl = 600
 height = 740
 width = 800
 st.set_page_config(layout='wide')
-index_name = 'rsrs指标'
-columns = ['股票代码', '股票名称', '股票规模',
-           '日期', '价格', 'rsrs指标',
-           '昨天rsrs指标', 'rsrs买入阈值',
-           'rsrs卖出阈值', '买卖信号']
+
 mysql_conn = st.connection('mysql', type='sql', ttl=ttl)
 max_date_sql = '''
                 select max(date) date 
@@ -347,11 +344,10 @@ def macro_strategy():
 #     st.dataframe(df_board, hide_index=True, width=width, height=300)
 
 
-portfolio, hot_new, okex_strategy, \
-    small_strategy = st.tabs(["组合投资",
-                              "投资热点",
-                              "okex列表推荐",
-                              "小市值策略"])
+nn, portfolio, hot_new = st.tabs(["神经网络策略", "组合投资", "投资热点"])
+
+with nn:
+    nn_strategy()
 
 with portfolio:
     portfolio_strategy()
@@ -359,11 +355,8 @@ with portfolio:
 with hot_new:
     get_hot_invest()
 
-with okex_strategy:
-    get_okex_list()
 
-with small_strategy:
-    macro_strategy()
+
 
 # with board_strategy_ui:
 #     board_strategy()
