@@ -29,3 +29,4 @@ torch
 transformers==4.35.2
 Riskfolio-Lib==5.0.1
 pytdx
+optuna==3.4.0

@@ -5,7 +5,19 @@ from streamlit_echarts import st_echarts
 import empyrical
 import numpy as np
 from scipy.special import erf
+from datetime import timedelta, datetime
+import pytz
+from dateutil.relativedelta import relativedelta
+
+
 pymysql.install_as_MySQLdb()
+tz = pytz.timezone('Asia/Shanghai')
+now = datetime.now(tz)
+
+# 计算上个月的日期
+last_month = now - relativedelta(months=1)
+last_month = last_month.strftime("%Y%m")
+print(last_month)
 
 is_local = False
 ttl = 600
@@ -78,18 +90,19 @@ def get_profit_df(df, p_dict):
 
 def nn_strategy():
     st.markdown("## 神经网络投资")
-    sql = '''
+    sql = f'''
     select t1.code, t2.name, t1.parameter
-    from etf.ads_nn_strategy_parameter t1
+    from etf.ads_nasdaq_strategy t1
     join etf.dim_etf_basic_info t2
       on t1.code=t2.code
+    where t1.date='{last_month}'
     '''
     df_codes = mysql_conn.query(sql, ttl=0)
     name2code = dict(df_codes[['name', 'code']].values.tolist())
     code2parameter = dict(df_codes[['code', 'parameter']].values.tolist())
     
     # get history data
-    options = ["广发纳斯达克100E行情"]+ list(name2code.keys())
+    options = list(name2code.keys())
     select_fund = st.selectbox(label='ETF名称', options=options)
     select_code = name2code[select_fund]
     sql = f'''
