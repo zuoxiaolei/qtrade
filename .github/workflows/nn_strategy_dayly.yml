@@ -38,4 +38,4 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           MYSQL_IP: ${{ secrets.MYSQL_IP }}
         run: |
-          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python nn_strategy_offline.py
+          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/nn_strategy_offline.py
