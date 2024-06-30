@@ -5,7 +5,7 @@ import pymysql
 from streamlit_echarts import st_echarts
 import empyrical
 from easyquotation import use
-from nn_strategy_app import nn_strategy
+from rank_strategy_app import rotation_strategy
 
 quotation = use('sina')
 portfolio_code = ['518880', '512890', '159941']
@@ -243,105 +243,10 @@ def macro_strategy():
     st.dataframe(df_macro, hide_index=True, width=width, height=1000)
 
 
-# def board_strategy():
-#     st.markdown("## 题材股策略")
-#
-#     # 筛选时间
-#     sql = '''
-#     select date, board_name, profit rate
-#     from stock.board_profit
-#     order by date
-#     '''
-#     df_portfolio = mysql_conn.query(sql, ttl=0)
-#
-#     min_date = df_portfolio.date.min()
-#     max_date = df_portfolio.date.max()
-#     options = list(range(int(min_date[:4]), int(max_date[:4]) + 1))[::-1]
-#     options = [str(ele) for ele in options]
-#     options = ['all'] + options
-#
-#     st.markdown("### 收益曲线")
-#     select_year = st.selectbox(label='年份', options=options, key="board")
-#     if select_year != 'all':
-#         df_portfolio = df_portfolio[df_portfolio.date.map(lambda x: x[:4] == select_year)]
-#
-#     df_portfolio.index = pd.to_datetime(df_portfolio['date'])
-#     df_portfolio["profit"] = df_portfolio["rate"] / df_portfolio["rate"].shift() - 1
-#
-#     df_portfolio.index = pd.to_datetime(df_portfolio['date'])
-#     df_portfolio['rate'] = df_portfolio['rate'] / df_portfolio['rate'].iloc[0]
-#     df_portfolio["profit"] = df_portfolio["rate"] / df_portfolio["rate"].shift() - 1
-#
-#     accu_returns, annu_returns, max_drawdown, sharpe = calc_indicators(df_portfolio['profit'])
-#     accu_returns = round(accu_returns, 3)
-#     annu_returns = round(annu_returns, 3)
-#     max_drawdown = round(max_drawdown, 3)
-#     sharpe = round(sharpe, 3)
-#
-#     min_value = round(df_portfolio["rate"].max() * 0.98, 2)
-#     max_value = round(df_portfolio["rate"].max() * 1.02, 2)
-#
-#     options = {
-#         "xAxis": {
-#             "type": "category",
-#             "data": df_portfolio['date'].tolist(),
-#         },
-#         "yAxis": {},
-#         "series": [{"data": df_portfolio['rate'].tolist(), "type": "line"}],
-#         "tooltip": {
-#             'trigger': 'axis',
-#             'backgroundColor': 'rgba(32, 33, 36,.7)',
-#             'borderColor': 'rgba(32, 33, 36,0.20)',
-#             'borderWidth': 1,
-#             'textStyle': {
-#                 'color': '#fff',
-#                 'fontSize': '12'
-#             },
-#             'axisPointer': {
-#                 'type': 'cross',
-#                 'label': {
-#                     'backgroundColor': '#6a7985'
-#                 }
-#             },
-#         },
-#         "title": {
-#             'text': f'''累计收益: {accu_returns}\n年化收益: {annu_returns}\n最大回撤:{max_drawdown}\n夏普比:{sharpe}''',
-#             'right': 'left',
-#             'top': '0px',
-#         }
-#     }
-#     st_echarts(options=options, height=400)
-#
-#     df_portfolio = df_portfolio.reset_index(drop=True)
-#     df_portfolio["profit_str"] = df_portfolio["profit"].map(lambda x: str(round(100 * x, 3)) + "%")
-#
-#     df_portfolio_daily = df_portfolio[['date', 'profit_str', "profit"]]
-#     df_portfolio_daily = df_portfolio_daily.sort_values("date", ascending=False)
-#     df_portfolio_daily = df_portfolio_daily.head(100)
-#
-#     df_portfolio_month = df_portfolio
-#     df_portfolio_month["月份"] = df_portfolio["date"].map(lambda x: str(x[:7]))
-#     df_portfolio_month = df_portfolio_month.groupby("月份", as_index=False)["profit"].sum()
-#     df_portfolio_month["收益率"] = df_portfolio_month["profit"].map(lambda x: str(round(100 * x, 3)) + "%")
-#     df_portfolio_month = df_portfolio_month.sort_values(by="月份", ascending=False)
-#     st.markdown("### 每月收益率分析")
-#     st.bar_chart(df_portfolio_month.head(12), x='月份', y='profit')
-#     st.dataframe(df_portfolio_month[['月份', '收益率']], hide_index=True, width=width, height=300)
-#     st.markdown("### 每日收益率分析")
-#     st.bar_chart(df_portfolio_daily.head(12), x='date', y='profit')
-#     st.dataframe(df_portfolio_daily[['date', 'profit_str']], hide_index=True, width=width, height=300)
-#
-#     st.markdown("### 板块轮动")
-#     df_board = df_portfolio.tail(30)
-#     df_board = df_board[['date', 'board_name', 'rate']]
-#     df_board.sort_values(by="date", ascending=False, inplace=True)
-#     st.dataframe(df_board, hide_index=True, width=width, height=300)
-
-
-nn, portfolio, hot_new = st.tabs(["神经网络策略", "组合投资", "投资热点"])
+nn, portfolio, hot_new = st.tabs(["轮动策略", "组合投资", "投资热点"])
 
 with nn:
-    nn_strategy()
+    rotation_strategy()
 
 with portfolio:
     portfolio_strategy()

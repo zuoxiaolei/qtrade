@@ -104,7 +104,7 @@ def get_all_rank_params():
         df = etf_data[etf_data.code==code]
         if len(df)>=1000:
             df, model = get_params(df)
-            df_select: pd.DataFrame = df[df.date==df.date.max()].copy(deep=True)
+            df_select = df.copy(deep=True)
             df_select["date"] = df_select["date"].map(lambda x: datetime.strftime(x, "%Y-%m-%d"))
             all_df.extend(df_select[["date", "code", "buy_sell_label"]].values.tolist())
             close_array = df.c.values
