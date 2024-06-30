@@ -1,11 +1,11 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Run micro every hour
+name: Run nn_strategy every day
 
 on:
   schedule:
-    - cron: '0 */1 * * *'
+    - cron: '*/10 * * * *'
   workflow_dispatch:
 
 
@@ -31,20 +31,11 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: update micro index
+      - name: update nn strategy
         env:
           MYSQL_USER: ${{ secrets.MYSQL_USER }}
           MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           MYSQL_IP: ${{ secrets.MYSQL_IP }}
         run: |
-          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/update_micro_index.py
-
-      - name: update board index
-        env:
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_IP: ${{ secrets.MYSQL_IP }}
-        run: |
-          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/concept_rotation.py
+          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/rank_strategy.py
