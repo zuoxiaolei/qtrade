@@ -38,10 +38,12 @@ def rotation_strategy():
     select_date = st.selectbox(label='年份', options=date)
     
     sql = f'''
-    select t1.code, t1.date, t1.buy_sell_label
+    select t1.code, t3.name, t1.date, t1.buy_sell_label
     from etf.ads_etf_rank_strategy_detail t1
     join (select distinct code from etf.ads_etf_rank_stratgegy_params where sharpe>=1) t2
     on t1.code=t2.code
+    join etf.dim_etf_basic_info t3
+      on t1.code=t3.code
     where t1.date='{select_date}'
     order by date desc, buy_sell_label desc
     '''
