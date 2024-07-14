@@ -27,34 +27,13 @@ mysql_conn = st.connection('mysql', type='sql', ttl=ttl)
 
 
 def rotation_strategy():
-    st.markdown("## 轮动策略")
-    
-    sql = '''
-    select distinct date
-    from etf.ads_etf_rank_strategy_detail
-    order by date desc
-    '''
-    date = mysql_conn.query(sql, ttl=0)["date"].tolist()
-    select_date = st.selectbox(label='年份', options=date)
+    st.markdown("## 纳斯达克策略score是否大于等于7")
     
     sql = f'''
-    select t1.code, t3.name, t1.date, t1.buy_sell_label
-    from etf.ads_etf_rank_strategy_detail t1
-    join (select distinct code from etf.ads_etf_rank_stratgegy_params where sharpe>=1) t2
-    on t1.code=t2.code
-    join etf.dim_etf_basic_info t3
-      on t1.code=t3.code
-    where t1.date='{select_date}'
-    order by date desc, buy_sell_label desc
+    select *
+    from etf.ads_etf_rank_strategy_detail t 
+    where code='159941'
+    order by date desc
     '''
     df = mysql_conn.query(sql, ttl=0)
     st.dataframe(df, hide_index=True, width=width, height=600)
-
-
-
-def calc_indicators(df_returns):
-    accu_returns = empyrical.cum_returns_final(df_returns)
-    annu_returns = empyrical.annual_return(df_returns)
-    max_drawdown = empyrical.max_drawdown(df_returns)
-    sharpe = empyrical.sharpe_ratio(df_returns)
-    return accu_returns, annu_returns, max_drawdown, sharpe
