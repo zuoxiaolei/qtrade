@@ -7,6 +7,7 @@ from mysql_util import *
 from tqdm import tqdm
 import json
 import duckdb
+from send_message import send_nasdaq_strategy
 
 def get_etf_data():
     
@@ -94,7 +95,7 @@ def back_test(is_buy_array, close_array, date_array):
     sharpe = empyrical.sharpe_ratio(df_profits["increase_rate"])
     max_drawdown = empyrical.max_drawdown(df_profits["increase_rate"])
     annual_return = math.pow(profit, 365/len(df_profits)) - 1
-    return profit, sharpe, annual_return, max_drawdown
+    return profit, sharpe, annual_return, max_drawdown, df_profits
 
 def get_all_rank_params():
     etf_data, codes = get_etf_data()
@@ -111,7 +112,7 @@ def get_all_rank_params():
             date_array = df.date.values
             is_buy_array = df.apply(lambda x: x["buy_sell_label"]>=7, axis=1) - 0
             is_buy_array = is_buy_array.values
-            profit, sharpe, annual_return, max_drawdown = back_test(is_buy_array, close_array, date_array)
+            profit, sharpe, annual_return, max_drawdown, df_profits = back_test(is_buy_array, close_array, date_array)
             result.append((code, profit, sharpe, annual_return, max_drawdown, json.dumps(model)))
     sql = """
     replace into etf.ads_etf_rank_stratgegy_params(code, profit, sharpe, annual_return, max_drawdown, model)
@@ -199,3 +200,5 @@ def back_test2():
     
 if __name__ == "__main__":
     get_all_rank_params()
+    send_nasdaq_strategy()
+    

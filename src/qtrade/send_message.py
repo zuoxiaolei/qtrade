@@ -52,7 +52,22 @@ def send_ratation_message(last_day, last_day_profit):
         message = f"组合投资\n日期：{last_day}\n日涨幅：{last_day_profit}%\n月涨幅：{increase_month}%\n年涨幅：{increase_year}%"
         send_message(message, title="组合投资")
 
+def send_nasdaq_strategy():
+    with get_connection() as cursor:
+        cursor.execute("""select code, date, buy_sell_label  from etf.ads_etf_rank_strategy_detail where code='159941' order by date desc limit 1""")
+        data = cursor.fetchall()
+    code, date, buy_sell_label = data[0]
+    hour = datetime.now(tz).hour
+    buy_label = "买" if buy_sell_label>=7 else "卖"
+    if date==now and 9 <= hour <= 15:
+        message = f"""
+        日期：{date}
+        代码：{code}
+        得分：{buy_sell_label}
+        买卖信号：{buy_label}"""
+        send_message(message, title="纳斯达克策略")
 
 if __name__ == '__main__':
-    send_ratation_message("2024-05-28", last_day_profit=1.0)
+    # send_ratation_message("2024-05-28", last_day_profit=1.0)
+    send_nasdaq_strategy()
     
