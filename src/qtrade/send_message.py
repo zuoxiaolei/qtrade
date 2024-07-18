@@ -3,7 +3,7 @@ import pytz
 from datetime import datetime
 from mysql_util import get_connection
 
-tokens = [
+global_tokens = [
     'b0b21688d4694f7999c301386ee90a0c',  # xiaolei
     # 'a667be8c89e341348a854ee0707793c9',  # zhanglin
 ]
@@ -11,7 +11,7 @@ tz = pytz.timezone('Asia/Shanghai')
 now = datetime.now(tz).strftime("%Y-%m-%d")
 
 
-def send_message(content, title):
+def send_message(content, title, tokens=global_tokens):
     for token in tokens:
         params = {
             'token': token,
@@ -65,7 +65,7 @@ def send_nasdaq_strategy():
         代码：{code}
         得分：{buy_sell_label}
         买卖信号：{buy_label}"""
-        send_message(message, title="纳斯达克策略")
+        send_message(message, title="纳斯达克策略", tokens=global_tokens+["66cc056f86954bccb2e2591c6b0227b6"])
 
 if __name__ == '__main__':
     # send_ratation_message("2024-05-28", last_day_profit=1.0)
