@@ -61,10 +61,10 @@ def portfolio_strategy():
 
     min_date = df_portfolio.date.min()
     max_date = df_portfolio.date.max()
+    all_increase_rate, max_date = get_portfolio_realtime_data(['all'] + portfolio_code)
     max_month = max_date[:7]
     max_year = max_date[:4]
-
-    all_increase_rate, _ = get_portfolio_realtime_data(['all'] + portfolio_code)
+    
     increase_rate = all_increase_rate[1:]
     increase_month = mysql_conn.query(f'''select value 
                                           from etf.ads_etf_portfolio_profit_summary
@@ -278,7 +278,7 @@ def rank_portfolio_strategy():
     if date_str!= df_portfolio["date"].max():
         last_rate = float(df_portfolio.iloc[-1]["close"])
         current_rate = (all_increase_rate[0]/100+1)*last_rate
-        df_portfolio.append({"date": date_str, "close": current_rate}, ignore_index=True)
+        df_portfolio = df_portfolio.append({"date": date_str, "close": current_rate}, ignore_index=True)
 
     df_portfolio, model = get_params(df_portfolio)
     df_portfolio["date"] = df_portfolio["date"].map(lambda x: x.strftime("%Y-%m-%d"))
