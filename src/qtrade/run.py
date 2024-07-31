@@ -1,6 +1,6 @@
 import sys
 from update_etf_data import run_every_day
-from update_micro_index import update_micro_index_data
+
 
 
 def main():

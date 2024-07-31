@@ -67,7 +67,7 @@ def calc_indicators(df_returns):
     return accu_returns, annu_returns, max_drawdown, sharpe
 
 def rotation_strategy():
-    st.markdown("## nasdaq策略")
+    st.markdown("## 红利策略")
 
     # 筛选时间
     sql = f'''
@@ -75,14 +75,15 @@ def rotation_strategy():
     from etf.ads_etf_rank_strategy_detail t1
     join etf.ods_etf_history t2
       on t1.code=t2.code and t1.date=t2.date
-    where t1.code='159941'
+    where t1.code='512890'
     order by t1.date
     '''
     df_portfolio = mysql_conn.query(sql, ttl=0)
+    st.text("大于等于9买入")
     st.dataframe(df_portfolio.tail(100)[::-1], hide_index=True, width=width, height=600)
     min_date = df_portfolio.date.min()
     max_date = df_portfolio.date.max()
-    is_buy_array = df_portfolio.apply(lambda x: x["buy_sell_label"]>=7, axis=1) - 0
+    is_buy_array = df_portfolio.apply(lambda x: x["buy_sell_label"]>=9, axis=1) - 0
     is_buy_array = is_buy_array.values
     close_array =  df_portfolio["close"].values
     date_array = df_portfolio["date"].values
@@ -94,7 +95,7 @@ def rotation_strategy():
     options = list(range(int(min_date[:4]), int(max_date[:4]) + 1))[::-1]
     options = [str(ele) for ele in options]
     options = ['all'] + options
-
+    
     st.markdown("### 收益曲线")
     select_year = st.selectbox(label='年份', options=options)
     if select_year != 'all':
