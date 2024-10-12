@@ -4,13 +4,12 @@ from get_etf_scale import get_all_fund_scale
 import akshare as ak
 import retrying
 from mysql_util import get_connection, time_cost, get_max_date, insert_table_by_batch
-from send_message import send_ratation_message
 from get_spark import get_spark
 import time
 import pytz
 import pandas as pd
 import numpy as np
-from get_baidu_trend import get_baidu_hot_news, update_news_analysis
+# from get_baidu_trend import get_baidu_hot_news, update_news_analysis
 
 thread_num = 10
 tz = pytz.timezone('Asia/Shanghai')
@@ -56,7 +55,8 @@ def get_etf_codes():
 
 @time_cost
 def update_etf_history_data(full=False):
-    codes = get_etf_codes()
+    # codes = get_etf_codes()
+    codes = ['518880', '512890', '159941']
     start_date = get_max_date(n=1)
     start_date = start_date.replace('-', '')
     start_date = "19900101" if full else start_date
@@ -144,7 +144,6 @@ def get_portfolio_report():
 
     data = list(zip(pandas_df.index.tolist(), pandas_df["rate_cum"].tolist(),
                     pandas_df["rate"].tolist()))
-    last_day, last_day_profit = pandas_df.index[-1], pandas_df["rate"].iloc[-1]
     sql = '''
     replace into etf.ads_eft_portfolio_rpt
     values (%s, %s, %s)
@@ -162,17 +161,16 @@ def get_portfolio_report():
     values (%s, 'month', %s)
     '''
     insert_table_by_batch(sql, df_month.values.tolist())
-    send_ratation_message(last_day, last_day_profit)
 
 
 def run_every_day():
-    update_etf_scale()
-    update_etf_basic_info()
+    # update_etf_scale()
+    # update_etf_basic_info()
     update_etf_history_data()
     update_trade_date()
     get_portfolio_report()
-    get_baidu_hot_news()
-    update_news_analysis()
+    # get_baidu_hot_news()
+    # update_news_analysis()
 
 
 if __name__ == "__main__":

@@ -58,7 +58,7 @@ def send_nasdaq_strategy():
         data = cursor.fetchall()
     code, date, buy_sell_label = data[0]
     hour = datetime.now(tz).hour
-    buy_label = "买" if buy_sell_label>=7 else "卖"
+    buy_label = "买" if buy_sell_label>=9 else "卖"
     if date==now and 9 <= hour <= 15:
         message = f"""
         日期：{date}

@@ -69,9 +69,14 @@ def portfolio_strategy():
     min_date = df_portfolio.date.min()
     max_date = df_portfolio.date.max()
     all_increase_rate, max_date = get_portfolio_realtime_data(['all'] + portfolio_code)
-    max_month = max_date[:7]
     max_year = max_date[:4]
-    
+    sql_max_month = """
+    select max(date) date
+    from etf.ads_etf_portfolio_profit_summary
+    where date_type='month'
+    """
+    max_month = mysql_conn.query(sql_max_month, ttl=0)['date'].iloc[0]
+
     increase_rate = all_increase_rate[1:]
     increase_month = mysql_conn.query(f'''select value 
                                           from etf.ads_etf_portfolio_profit_summary

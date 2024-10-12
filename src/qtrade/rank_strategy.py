@@ -1,13 +1,11 @@
 import pandas as pd
-from datetime import datetime, timezone, date
+from datetime import datetime
 import empyrical
 import math
 import numpy as np
 from mysql_util import *
 from tqdm import tqdm
 import json
-import duckdb
-from send_message import send_nasdaq_strategy
 
 def get_etf_data():
     sql_history_data = """
