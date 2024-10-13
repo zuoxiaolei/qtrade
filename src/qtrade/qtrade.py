@@ -8,12 +8,12 @@ from easyquotation import use
 from rank_strategy_app import rotation_strategy
 from datetime import datetime
 import numpy as np
+
 pymysql.install_as_MySQLdb()
 
 quotation = use('sina')
 portfolio_code = ['518880', '512890', '159941']
 portfolio_name = ['黄金ETF', '红利ETF', '纳指ETF']
-
 
 is_local = False
 ttl = 600
@@ -34,7 +34,8 @@ def get_realtime_increase_rate(stock_code):
     close = realtime_dict[0][stock_code]['close']
     increase_rate = now / close - 1
     return increase_rate
-    
+
+
 def get_portfolio_realtime_data(stock_code):
     realtime_dict = quotation.stocks(stock_code[1:])
     all_increase_rate = [0] * len(stock_code)
@@ -200,19 +201,6 @@ def portfolio_strategy():
         st.dataframe(df_portfolio_daily[['date', 'profit_str']], hide_index=True, width=width, height=300)
 
 
-def get_hot_invest():
-    sql = '''
-    select date, query, hotScore stock_score
-    from github.baidu_hot_news
-    where date >= (select date from etf.dim_etf_trade_date where rn=7) and category in ('finance', 'stocks', 'politics')
-    order by date desc, stock_score desc
-    '''
-    df_news = mysql_conn.query(sql, ttl=0)
-    df_news.columns = ['日期', '新闻标题', '对股市影响大小']
-    st.markdown("# 每日热点新闻分析")
-    st.dataframe(df_news, hide_index=True, width=width, height=1000)
-
-
 def calc_indicators(df_returns):
     accu_returns = empyrical.cum_returns_final(df_returns)
     annu_returns = empyrical.annual_return(df_returns)
@@ -220,53 +208,57 @@ def calc_indicators(df_returns):
     sharpe = empyrical.sharpe_ratio(df_returns)
     return accu_returns, annu_returns, max_drawdown, sharpe
 
+
 def get_params(df):
     df = df.sort_values(by="date")
     df = df.drop_duplicates(subset=["date"])
     df["c"] = df.close.map(float)
-    df["future_increase_rate1"] = (df.c.shift(-1)/df.c-1)*100
-    
+    df["future_increase_rate1"] = (df.c.shift(-1) / df.c - 1) * 100
+
     df["date"] = df["date"].apply(lambda x: datetime.strptime(x, "%Y-%m-%d"))
     df["year"] = df["date"].map(lambda x: x.year)
     mean_rate = df["future_increase_rate1"].mean()
-    
+
     def get_rank(series):
         data = series.values
         return np.argsort(-data)[-1]
-    
+
     for i in range(2, 21):
         df[f"c_rank{i}"] = df.c.rolling(i).apply(get_rank)
-    
+
     # get model parameter
     feature_score = {}
     for i in range(2, 21):
         tmp = df.groupby(f"c_rank{i}", as_index=False)["future_increase_rate1"].mean()
-        tmp = tmp[tmp["future_increase_rate1"]>=mean_rate]
+        tmp = tmp[tmp["future_increase_rate1"] >= mean_rate]
         feature_score[f"c_rank{i}"] = tmp[f"c_rank{i}"].tolist()
     model = feature_score
     keys = list(model.keys())
+
     def get_rank_strategy(row):
         score = 0
         for ele in keys:
             if row[ele] in model[ele]:
                 score += 1
         return score
+
     df["buy_sell_label"] = df.apply(get_rank_strategy, axis=1)
     return df, model
+
 
 def back_test(is_buy_array, close_array, date_array):
     profit = 1
     last_status = 0
     profits = []
-    
+
     for i in range(1, len(close_array)):
         is_buy = is_buy_array[i]
-        last_price = close_array[i-1]
+        last_price = close_array[i - 1]
         current_price = close_array[i]
-        profit = profit*(current_price/last_price) if last_status else profit
+        profit = profit * (current_price / last_price) if last_status else profit
         profits.append([date_array[i], profit, is_buy])
         last_status = is_buy
-        
+
     df_profits = pd.DataFrame(profits, columns=["date", "rate", "status"])
     df_profits.index = df_profits["date"]
     df_profits["increase_rate"] = df_profits["rate"] / df_profits["rate"].shift() - 1
@@ -276,14 +268,7 @@ def back_test(is_buy_array, close_array, date_array):
     return profit, sharpe, annual_return, max_drawdown, df_profits
 
 
-rotation, portfolio, hot_new = st.tabs(["红利", "组合投资", "投资热点"])
-
-
-with rotation:
-    rotation_strategy()
+portfolio = st.tabs(["ETF组合投资"])
 
 with portfolio:
     portfolio_strategy()
-
-with hot_new:
-    get_hot_invest()

@@ -4,12 +4,10 @@ from get_etf_scale import get_all_fund_scale
 import akshare as ak
 import retrying
 from mysql_util import get_connection, time_cost, get_max_date, insert_table_by_batch
-from get_spark import get_spark
 import time
 import pytz
 import pandas as pd
 import numpy as np
-# from get_baidu_trend import get_baidu_hot_news, update_news_analysis
 
 thread_num = 10
 tz = pytz.timezone('Asia/Shanghai')
@@ -101,7 +99,12 @@ def update_trade_date():
         '''
         cursor.execute(sql)
 
+
 def get_portfolio_report():
+    weight_dict = {'518880': 0.4997765583588797,
+                   '512890': 0.29836978509792955,
+                   '159941': 0.20185365654319073}
+    columns = ['518880', '512890', '159941']
     sql = '''
     select code, date, close, (close-close_lag1)/close_lag1*100 rate
     from (
@@ -121,17 +124,16 @@ def get_portfolio_report():
         data = cursor.fetchall()
     df = pd.DataFrame(data, columns=['code', 'date', 'close', 'rate'])
     df = df.sort_values(by="date")
-    spark = get_spark()
-    spark_df = spark.createDataFrame(df)
-    spark_df = spark_df.groupby("date").pivot("code").mean("rate")
-    pandas_df = spark_df.toPandas()
+
+    df_list = [df.loc[df.code == ele, ["date", "rate"]] for ele in columns]
+    pandas_df = df_list[0]
+    pandas_df = pandas_df.reset_index(drop=True)
+    for num, ele in enumerate(columns):
+        pandas_df[ele] = df_list[num]["rate"].values
+
     pandas_df = pandas_df.sort_values(by='date')
     pandas_df.index = pandas_df['date']
     pandas_df = pandas_df.drop(['date'], axis=1)
-    weight_dict = {'518880': 0.4997765583588797,
-                   '512890': 0.29836978509792955,
-                   '159941': 0.20185365654319073}
-    columns = ['518880', '512890', '159941']
     weight_list = [weight_dict[k] for k in columns]
     pandas_df = pandas_df[columns]
     pandas_df['rate'] = pandas_df.apply(lambda x: np.dot(weight_list, x.tolist()), axis=1)
@@ -164,13 +166,9 @@ def get_portfolio_report():
 
 
 def run_every_day():
-    # update_etf_scale()
-    # update_etf_basic_info()
     update_etf_history_data()
     update_trade_date()
     get_portfolio_report()
-    # get_baidu_hot_news()
-    # update_news_analysis()
 
 
 if __name__ == "__main__":
