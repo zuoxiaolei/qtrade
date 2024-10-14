@@ -5,7 +5,6 @@ import pymysql
 from streamlit_echarts import st_echarts
 import empyrical
 from easyquotation import use
-from rank_strategy_app import rotation_strategy
 from datetime import datetime
 import numpy as np
 
