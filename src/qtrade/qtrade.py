@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import pandas as pd
 import streamlit as st
 import pymysql
@@ -214,7 +214,7 @@ def get_params(df):
     df["c"] = df.close.map(float)
     df["future_increase_rate1"] = (df.c.shift(-1) / df.c - 1) * 100
 
-    df["date"] = df["date"].apply(lambda x: datetime.strptime(x, "%Y-%m-%d"))
+    df["date"] = df["date"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
     df["year"] = df["date"].map(lambda x: x.year)
     mean_rate = df["future_increase_rate1"].mean()
 

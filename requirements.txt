@@ -7,7 +7,6 @@ tqdm
 requests==2.28.2
 retrying
 psutil
-pyarrow
 matplotlib
 pymysql
 SQLAlchemy==1.4.39
