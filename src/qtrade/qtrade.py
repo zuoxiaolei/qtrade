@@ -267,7 +267,7 @@ def back_test(is_buy_array, close_array, date_array):
     return profit, sharpe, annual_return, max_drawdown, df_profits
 
 
-portfolio = st.tabs(["ETF组合投资"])
-
-with portfolio:
-    portfolio_strategy()
+# portfolio = st.tabs(["ETF组合投资"])
+#
+# with portfolio[0]:
+portfolio_strategy()
