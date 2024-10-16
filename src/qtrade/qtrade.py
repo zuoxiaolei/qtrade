@@ -110,7 +110,7 @@ def portfolio_strategy():
     st.dataframe(df_increase, hide_index=True, width=width, height=140)
     options = list(range(int(min_date[:4]), int(max_date[:4]) + 1))[::-1]
     options = [str(ele) for ele in options]
-    options = ['all'] + options
+    options = options + ['all']
 
     st.markdown("### 收益曲线")
     select_year = st.selectbox(label='年份', options=options, key=3)
