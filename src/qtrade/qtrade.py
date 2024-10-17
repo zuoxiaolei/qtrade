@@ -5,7 +5,7 @@ import pymysql
 from streamlit_echarts import st_echarts
 import empyrical
 from easyquotation import use
-
+from qtrade_forex import forex_portfolio_strategy
 import numpy as np
 
 pymysql.install_as_MySQLdb()
@@ -267,7 +267,10 @@ def back_test(is_buy_array, close_array, date_array):
     return profit, sharpe, annual_return, max_drawdown, df_profits
 
 
-# portfolio = st.tabs(["ETF组合投资"])
-#
-# with portfolio[0]:
-portfolio_strategy()
+forex_portfolio, etf_portfolio = st.tabs(['外汇组合', 'ETF组合'])
+
+with forex_portfolio:
+    forex_portfolio_strategy()
+
+with etf_portfolio:
+    portfolio_strategy()
