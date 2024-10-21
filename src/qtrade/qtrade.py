@@ -56,6 +56,8 @@ def get_portfolio_realtime_data(stock_code):
 
 
 def portfolio_strategy():
+    st.cache_data.clear()
+    st.cache_resource.clear()
     st.markdown("## 组合投资策略")
 
     # 筛选时间

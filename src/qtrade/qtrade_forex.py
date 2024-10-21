@@ -36,6 +36,8 @@ order by date
 
 
 def forex_portfolio_strategy():
+    st.cache_data.clear()
+    st.cache_resource.clear()
     st.markdown("## 组合投资策略")
     df = mysql_conn.query(data_sql)
     time_set = set(df.loc[df.code == "BTCUSD", 'date'].tolist())
