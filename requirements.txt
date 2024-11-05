@@ -1,6 +1,6 @@
 akshare
 numpy==1.26.4
-pandas
+pandas==1.5.3
 pytz
 easyquotation
 scipy
