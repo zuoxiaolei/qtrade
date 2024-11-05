@@ -11,7 +11,7 @@ import retrying
 import tqdm
 import sys
 import time
-from pyspark.sql import SparkSession
+# from pyspark.sql import SparkSession
 
 data_path = 'data/stock_data/'
 cpu_count = psutil.cpu_count()

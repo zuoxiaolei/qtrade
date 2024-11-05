@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 import tqdm
-from get_etf_scale import get_all_fund_scale
+# from get_etf_scale import get_all_fund_scale
 import akshare as ak
 import retrying
 from mysql_util import get_connection, time_cost, get_max_date, insert_table_by_batch
