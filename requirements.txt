@@ -15,7 +15,7 @@ pyquery
 emoji
 beautifulsoup4==4.11.1
 html5lib==1.1
-streamlit==1.31.0
+streamlit==1.39.0
 streamlit-echarts==0.4.0
 empyrical==0.5.5
 #tushare
