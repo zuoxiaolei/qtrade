@@ -123,6 +123,12 @@ def forex_portfolio_strategy():
     df_portfolio_month["收益率"] = df_portfolio_month["profit"].map(lambda x: str(round(100 * x, 3)) + "%")
     df_portfolio_month = df_portfolio_month.sort_values(by="月份", ascending=False)
 
+    df_portfolio_year = df_portfolio
+    df_portfolio_year["年份"] = df_portfolio_year["date"].map(lambda x: str(x[:4]))
+    df_portfolio_year = df_portfolio_year.groupby("年份", as_index=False)["profit"].sum()
+    df_portfolio_year["收益率"] = df_portfolio_year["profit"].map(lambda x: str(round(100 * x, 3)) + "%")
+    df_portfolio_year = df_portfolio_year.sort_values(by="年份", ascending=False)
+
     day, month, year = st.tabs(['每日收益率分析', '每月收益率分析', '每年收益率分析'])
 
     with day:
@@ -136,13 +142,9 @@ def forex_portfolio_strategy():
         st.dataframe(df_portfolio_month[['月份', '收益率']], hide_index=True, width=width, height=300)
 
     with year:
-        df_year = mysql_conn.query(
-            "select date, value from etf.ads_etf_portfolio_profit_summary where date_type='year' ")
-        df_year = df_year.sort_values(by='date', ascending=False)
-        df_year["收益率"] = df_year.value.map(lambda x: str(round(x, 2)) + "%")
-        st.markdown("### 每月收益率分析")
-        st.bar_chart(df_year.head(12), x='date', y='value')
-        st.dataframe(df_year[['date', '收益率']], hide_index=True, width=width, height=300)
+        st.markdown("### 每年收益率分析")
+        st.bar_chart(df_portfolio_year.head(12), x='年份', y='profit')
+        st.dataframe(df_portfolio_year[['年份', '收益率']], hide_index=True, width=width, height=300)
 
 
 def calc_indicators(df_returns):
