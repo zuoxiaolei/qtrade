@@ -13,19 +13,19 @@ thread_num = 10
 tz = pytz.timezone('Asia/Shanghai')
 
 
-@time_cost
-def update_etf_scale():
-    scale_df = get_all_fund_scale()
-    etf_scale_data = scale_df.values.tolist()
-    print("update etf.dim_etf_scale")
-    start_time = time.time()
-    sql = '''
-        replace into etf.dim_etf_scale(code, scale)
-        values (%s, %s)
-        '''
-    insert_table_by_batch(sql, etf_scale_data)
-    end_time = time.time()
-    print(end_time - start_time)  # 0.12199997901916504
+# @time_cost
+# def update_etf_scale():
+#     scale_df = get_all_fund_scale()
+#     etf_scale_data = scale_df.values.tolist()
+#     print("update etf.dim_etf_scale")
+#     start_time = time.time()
+#     sql = '''
+#         replace into etf.dim_etf_scale(code, scale)
+#         values (%s, %s)
+#         '''
+#     insert_table_by_batch(sql, etf_scale_data)
+#     end_time = time.time()
+#     print(end_time - start_time)  # 0.12199997901916504
 
 
 @time_cost

@@ -43,9 +43,12 @@ jobs:
           MYSQL_IP: ${{ secrets.MYSQL_IP }}
         run: |
           MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/run.py run_every_day
-#      - name: git pull
-#        run: |
-#          git pull
-#      - uses: stefanzweifel/git-auto-commit-action@v4
-#        with:
-#          commit_message: auto update
+
+      - name: run update btc
+        env:
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_IP: ${{ secrets.MYSQL_IP }}
+        run: |
+          MYSQL_USER=$MYSQL_USER MYSQL_PORT=$MYSQL_PORT MYSQL_PASSWORD=$MYSQL_PASSWORD MYSQL_IP=$MYSQL_IP python src/qtrade/update_btc_data.py
