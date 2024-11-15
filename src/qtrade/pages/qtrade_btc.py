@@ -30,7 +30,7 @@ def btc_strategy():
     order by date
     '''
     df_portfolio = mysql_conn.query(sql, ttl=0)
-    print(df_portfolio.date.map(lambda x: x[:4]).unique().tolist())
+    # print(df_portfolio.date.map(lambda x: x[:4]).unique().tolist())
     min_date = df_portfolio.date.min()
     max_date = df_portfolio.date.max()
     options = list(range(int(min_date[:4]), int(max_date[:4]) + 1))[::-1]

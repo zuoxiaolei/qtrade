@@ -31,9 +31,9 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: download file
-        run: |
-          GIT_CLONE_PROTECTION_ACTIVE=false git clone https://huggingface.co/ranson/bert_news_classify && mv bert_news_classify/bert_news_classify_fp16_onnxruntime.onnx src/qtrade/data
+#      - name: download file
+#        run: |
+#          GIT_CLONE_PROTECTION_ACTIVE=false git clone https://huggingface.co/ranson/bert_news_classify && mv bert_news_classify/bert_news_classify_fp16_onnxruntime.onnx src/qtrade/data
 
       - name: run application
         env:
