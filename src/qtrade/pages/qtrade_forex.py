@@ -53,6 +53,7 @@ def forex_portfolio_strategy():
     for k, v in weight.items():
         Y["portfolio"] = Y["portfolio"] + v * Y[k]
 
+    Y["portfolio"] = Y["portfolio"] * 100
     min_date = Y.date.min()
     max_date = Y.date.max()
     print(min_date, max_date)
