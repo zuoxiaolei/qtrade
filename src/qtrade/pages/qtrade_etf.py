@@ -131,6 +131,13 @@ def portfolio_strategy():
     max_drawdown = round(max_drawdown, 3)
     sharpe = round(sharpe, 3)
 
+    df_portfolio["mean10"] = df_portfolio["rate"].rolling(10, min_periods=1).mean()
+    df_portfolio_show = df_portfolio.tail(50)
+    df_portfolio_show = df_portfolio_show[["rate", "mean10"]]
+    df_portfolio_show = df_portfolio_show.sort_values(by="date", ascending=False)
+    df_portfolio_show["label"] = (df_portfolio_show["rate"] > df_portfolio_show["mean10"]) - 0
+    st.dataframe(df_portfolio_show.tail(50))
+
     min_values = [df_portfolio["rate"].min()]
     max_values = [df_portfolio["rate"].max()]
     min_value = round(min(min_values) * 0.98, 2)
@@ -206,5 +213,6 @@ def calc_indicators(df_returns):
     max_drawdown = empyrical.max_drawdown(df_returns)
     sharpe = empyrical.sharpe_ratio(df_returns)
     return accu_returns, annu_returns, max_drawdown, sharpe
+
 
 portfolio_strategy()

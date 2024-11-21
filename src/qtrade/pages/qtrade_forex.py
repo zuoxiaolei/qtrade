@@ -75,6 +75,13 @@ def forex_portfolio_strategy():
     sharpe = round(sharpe, 3)
 
     df_portfolio["portfolio_cum"] = (df_portfolio["portfolio"] + 1).cumprod()
+    df_portfolio["mean10"] = df_portfolio["portfolio_cum"].rolling(10, min_periods=1).mean()
+    df_portfolio_show = df_portfolio.tail(50)
+    df_portfolio_show = df_portfolio_show[["portfolio_cum", "mean10"]]
+    df_portfolio_show = df_portfolio_show.sort_values(by="date", ascending=False)
+    df_portfolio_show["label"] = (df_portfolio_show["portfolio_cum"]>df_portfolio_show["mean10"])-0
+    st.dataframe(df_portfolio_show.tail(50))
+
     min_values = [df_portfolio["portfolio_cum"].min()]
     max_values = [df_portfolio["portfolio_cum"].max()]
     min_value = round(min(min_values) * 0.9999, 4)
@@ -87,7 +94,9 @@ def forex_portfolio_strategy():
         },
         "yAxis": {"type": "value", 'min': min_value, 'max': max_value},
         "series": [
-            {"data": df_portfolio['portfolio_cum'].tolist(), "type": "line"}],
+            {"data": df_portfolio['portfolio_cum'].tolist(), "type": "line"},
+            {"data": df_portfolio['mean10'].tolist(), "type": "line"},
+        ],
         "tooltip": {
             'trigger': 'axis',
             'backgroundColor': 'rgba(32, 33, 36,.7)',
