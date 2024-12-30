@@ -1,6 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
-import tqdm
-# from get_etf_scale import get_all_fund_scale
 import akshare as ak
 import retrying
 from mysql_util import get_connection, time_cost, get_max_date, insert_table_by_batch
@@ -8,24 +5,62 @@ import time
 import pytz
 import pandas as pd
 import numpy as np
+import re
+from concurrent.futures import ThreadPoolExecutor
+import requests
+import tqdm
 
 thread_num = 10
 tz = pytz.timezone('Asia/Shanghai')
 
+thread_num = 10
+headers = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"}
 
-# @time_cost
-# def update_etf_scale():
-#     scale_df = get_all_fund_scale()
-#     etf_scale_data = scale_df.values.tolist()
-#     print("update etf.dim_etf_scale")
-#     start_time = time.time()
-#     sql = '''
-#         replace into etf.dim_etf_scale(code, scale)
-#         values (%s, %s)
-#         '''
-#     insert_table_by_batch(sql, etf_scale_data)
-#     end_time = time.time()
-#     print(end_time - start_time)  # 0.12199997901916504
+weight = {'512690': 0.2534386069177697, '159632': 0.19455239012637038, '513660': 0.15975224413478367,
+          '510880': 0.08285366080880825, '513500': 0.078776175845003, '512290': 0.07801606135486173,
+          '159869': 0.06639370117394562, '515050': 0.04373830188635165, '516970': 0.04247885775210589}
+
+
+@retrying.retry(stop_max_attempt_number=10, stop_max_delay=10000)
+def get_fund_scale(code="159819"):
+    url = f"https://fund.eastmoney.com/{code}.html"
+    resp = requests.get(url, headers=headers)
+    resp.encoding = resp.apparent_encoding
+    scale = re.findall("基金规模</a>：(.*?)亿元", resp.text)[0].strip()
+    return code, float(scale)
+
+
+def get_fund_scale2(code="159819"):
+    try:
+        return get_fund_scale(code)
+    except:
+        None
+
+
+def get_all_fund_scale():
+    fund_etf_fund_daily_em_df = ak.fund_etf_fund_daily_em()
+    codes = fund_etf_fund_daily_em_df["基金代码"].tolist()
+    with ThreadPoolExecutor(thread_num) as executor:
+        fund_scale = list(tqdm.tqdm(executor.map(get_fund_scale2, codes), total=len(codes)))
+    fund_scale = [ele for ele in fund_scale if ele]
+    fund_scale = pd.DataFrame(fund_scale, columns=['code', 'scale'])
+    return fund_scale
+
+
+@time_cost
+def update_etf_scale():
+    scale_df = get_all_fund_scale()
+    etf_scale_data = scale_df.values.tolist()
+    print("update etf.dim_etf_scale")
+    start_time = time.time()
+    sql = '''
+        replace into etf.dim_etf_scale(code, scale)
+        values (%s, %s)
+        '''
+    insert_table_by_batch(sql, etf_scale_data)
+    end_time = time.time()
+    print(end_time - start_time)  # 0.12199997901916504
 
 
 @time_cost
@@ -54,7 +89,9 @@ def get_etf_codes():
 @time_cost
 def update_etf_history_data(full=False):
     # codes = get_etf_codes()
-    codes = ['518880', '512890', '159941']
+    codes1 = ['518880', '512890', '159941']
+    codes2 = [ele for ele in weight]
+    codes = codes1 + codes2
     start_date = get_max_date(n=1)
     start_date = start_date.replace('-', '')
     start_date = "19900101" if full else start_date
@@ -172,4 +209,5 @@ def run_every_day():
 
 
 if __name__ == "__main__":
-    run_every_day()
+    update_etf_history_data(full=False)
+    # get_all_fund_scale()
