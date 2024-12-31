@@ -247,7 +247,7 @@ class TradeSystem():
         df = pd.concat(all_dfs, axis=0)
 
         df = df.pivot(index="datetime", columns="name", values="increase_rate")
-        df = df.dropna(axis=0)
+        df = df.fillna(0)
         df = df.replace([np.inf, -np.inf], np.nan)
 
         df.index = pd.to_datetime(df.index)
