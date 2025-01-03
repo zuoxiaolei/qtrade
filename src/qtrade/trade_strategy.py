@@ -6,24 +6,56 @@ import riskfolio as rp
 import numpy as np
 from mysql_util import get_connection, insert_table_by_batch
 from datetime import datetime
+from loguru import logger
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+pd.set_option('display.float_format', '{:.10f}'.format)
 
 CLOSE_NAME = "close"
+
+
+def get_df_label(df, windows):
+    CLOSE_NAME = "close"
+    df["max_value"] = df[CLOSE_NAME].rolling(window=windows).max()
+    df["min_value"] = df[CLOSE_NAME].rolling(window=windows).min()
+    df["buy_at_top"] = df.apply(lambda x: x[CLOSE_NAME] >= x["max_value"], axis=1) - 0
+    df["buy_at_buttom"] = df.apply(lambda x: x[CLOSE_NAME] <= x["min_value"], axis=1) - 0
+    df["sell_at_top"] = df["buy_at_top"] * -1
+    df["sell_at_bottom"] = df["buy_at_buttom"] * -1
+    df["buy_at_top_bottom"] = df.apply(
+        lambda x: x[CLOSE_NAME] >= x["max_value"] or x[CLOSE_NAME] <= x["min_value"], axis=1) - 0
+    df["sell_at_top_botton"] = df["buy_at_top_bottom"] * -1
+
+    def get_buy_at_top_sell_botton_label(row):
+        close = row.close
+        max_value = row.max_value
+        min_value = row.min_value
+        if close >= max_value:
+            return 1
+        elif close <= min_value:
+            return -1
+        else:
+            return 0
+
+    df["buy_at_top_sell_botton"] = df.apply(get_buy_at_top_sell_botton_label, axis=1)
+    df["sell_at_top_buy_bottom"] = -df["buy_at_top_sell_botton"]
+    return df
 
 
 class TradeSystem():
     def __init__(self):
         self.portfolio_weight = {'AUDNZD': 0.12606726752931557, 'EURCAD': 0.08747526071925517,
-                'EURGBP': 0.08462258293763082, 'DXY': 0.07757021813635603,
-                'AUDCAD': 0.07467805975170688, 'USDJPY': 0.07140132295624485,
-                'GBPUSD': 0.06767056753692635, 'CADCHF': 0.06521575381635387,
-                'USDCAD': 0.06087621036071191, 'NZDCAD': 0.052007894006455474,
-                'AUDCHF': 0.04547605441015359, 'EURCHF': 0.041580588724947125,
-                'GBPNZD': 0.037051046422949103, 'GBPJPY': 0.03573278747431265,
-                'GBPCAD': 0.031803340687778306, 'AUDUSD': 0.03128115132148332,
-                'BTCUSD': 0.009489893207419229}
+                                 'EURGBP': 0.08462258293763082, 'DXY': 0.07757021813635603,
+                                 'AUDCAD': 0.07467805975170688, 'USDJPY': 0.07140132295624485,
+                                 'GBPUSD': 0.06767056753692635, 'CADCHF': 0.06521575381635387,
+                                 'USDCAD': 0.06087621036071191, 'NZDCAD': 0.052007894006455474,
+                                 'AUDCHF': 0.04547605441015359, 'EURCHF': 0.041580588724947125,
+                                 'GBPNZD': 0.037051046422949103, 'GBPJPY': 0.03573278747431265,
+                                 'GBPCAD': 0.031803340687778306, 'AUDUSD': 0.03128115132148332,
+                                 'BTCUSD': 0.009489893207419229}
 
     def get_data(self):
-        df = pd.read_parquet("df_full_1h.parquet")
+        df = pd.read_parquet(r"D:\workspace\strategy\df_full_1h.parquet")
         df = df.drop_duplicates(subset=["time", "name"])
         df = df.sort_values(by=["name", "time"])
         df["datetime"] = pd.to_datetime(df["time"], unit='s', utc=True)
@@ -53,10 +85,10 @@ class TradeSystem():
         sharpe = empyrical.sharpe_ratio(df_returns)
         return accu_returns, annu_returns, max_drawdown, sharpe
 
-    def buy_at_top(self, df, window, label_col="is_top"):
+    def trade_at_method_string(self, df, window, method_string):
         max_len = len(df)
         close_array = df[CLOSE_NAME].tolist()
-        is_buy_array = df[label_col].tolist()
+        is_buy_array = df[method_string].tolist()
         close_datetime = df["datetime"].tolist()
         all_profit = []
         all_datetime = []
@@ -80,152 +112,108 @@ class TradeSystem():
         all_profit_df.index = all_profit_df.datetime
         all_profit_df["increase_rate"] = all_profit_df["increase_rate"] / all_profit_df["increase_rate"].shift() - 1
         accu_returns, annu_returns, max_drawdown, sharpe = self.calc_indicators(all_profit_df["increase_rate"])
-        return "buy_at_top", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def buy_at_buttom(self, df, window, label_col="is_bottom"):
-        _, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df = self.buy_at_top(df, window,
-                                                                                                     label_col=label_col)
-        return "buy_at_buttom", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def sell_at_top(self, df, window):
-        _, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df = self.buy_at_top(df, window,
-                                                                                                     label_col="sell_at_top_label")
-        return "sell_at_top", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def sell_at_bottom(self, df, window, label_col="sell_at_bottom_label"):
-        _, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df = self.buy_at_top(df, window,
-                                                                                                     label_col=label_col)
-        return "sell_at_bottom", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def buy_at_top_bottom(self, df, window):
-        _, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df = self.buy_at_top(df, window,
-                                                                                                     label_col="is_top_or_bottom")
-        return "buy_at_top_bottom", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def sell_at_top_botton(self, df, window):
-        _, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df = self.buy_at_top(df, window,
-                                                                                                     label_col="sell_at_top_botton_label")
-        return "sell_at_top_botton", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def buy_at_top_sell_botton(self, df, window):
-        _, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df = self.buy_at_top(df, window,
-                                                                                                     label_col="buy_at_top_sell_botton_label")
-        return "buy_at_top_sell_botton", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def sell_at_top_buy_bottom(self, df, window):
-        _, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df = self.buy_at_top(df, window,
-                                                                                                     label_col="sell_at_top_buy_bottom_label")
-        return "sell_at_top_buy_bottom", profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
-
-    def get_buy_at_top_sell_botton_label(self, row):
-        close = row.close
-        max_value = row.max_value
-        min_value = row.min_value
-        if close >= max_value:
-            return 1
-        elif close <= min_value:
-            return -1
-        else:
-            return 0
-
-    def get_sell_at_top_buy_bottom_label(self, row):
-        return -self.get_buy_at_top_sell_botton_label(row)
-
-    def get_sell_at_top_label(self, row):
-        close = row.close
-        max_value = row.max_value
-        if close >= max_value:
-            return -1
-        else:
-            return 0
-
-    def get_sell_at_bottom_label(self, row):
-        close = row.close
-        min_value = row.min_value
-        if close <= min_value:
-            return -1
-        else:
-            return 0
-
-    def get_profit(self, df, window=10):
-        '''
-        method "buy_at_top"  "sell_at_top" "buy_at_bottom"  "sell_at_bottom"
-        '''
-        df["max_value"] = df[CLOSE_NAME].rolling(window=window).max()
-        df["min_value"] = df[CLOSE_NAME].rolling(window=window).min()
-        df["is_top"] = df.apply(lambda x: x[CLOSE_NAME] >= x["max_value"], axis=1) - 0
-        df["is_bottom"] = df.apply(lambda x: x[CLOSE_NAME] <= x["min_value"], axis=1) - 0
-        df["is_top_or_bottom"] = df.apply(lambda x: x["max_value"] >= x[CLOSE_NAME] or x["min_value"] <= x[CLOSE_NAME],
-                                          axis=1) - 0
-        df["buy_at_top_sell_botton_label"] = df.apply(lambda x: self.get_buy_at_top_sell_botton_label(x), axis=1)
-        df["sell_at_top_buy_bottom_label"] = df.apply(lambda x: self.get_sell_at_top_buy_bottom_label(x), axis=1)
-        df["sell_at_top_label"] = df.apply(lambda x: self.get_sell_at_top_label(x), axis=1)
-        df["sell_at_bottom_label"] = df.apply(lambda x: self.get_sell_at_bottom_label(x), axis=1)
-        df["sell_at_top_botton_label"] = -df["is_top_or_bottom"]
-
-        result = [self.buy_at_top(df, window),
-                  self.buy_at_buttom(df, window),
-                  self.sell_at_top(df, window),
-                  self.sell_at_bottom(df, window),
-                  self.buy_at_top_bottom(df, window),
-                  self.sell_at_top_botton(df, window),
-                  self.buy_at_top_sell_botton(df, window),
-                  self.sell_at_top_buy_bottom(df, window),
-                  ]
-        return result
+        return method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe, all_profit_df
 
     def get_profit_by_method(self, df, window, method_string):
-        df["max_value"] = df[CLOSE_NAME].rolling(window=window).max()
-        df["min_value"] = df[CLOSE_NAME].rolling(window=window).min()
-        df["is_top"] = df.apply(lambda x: x["max_value"] == x[CLOSE_NAME], axis=1) - 0
-        df["is_bottom"] = df.apply(lambda x: x["min_value"] == x[CLOSE_NAME], axis=1) - 0
-        df["is_top_or_bottom"] = df.apply(lambda x: x["max_value"] == x[CLOSE_NAME] or x["min_value"] == x[CLOSE_NAME],
-                                          axis=1) - 0
-        df["buy_at_top_sell_botton_label"] = df.apply(lambda x: self.get_buy_at_top_sell_botton_label(x), axis=1)
-        df["sell_at_top_buy_bottom_label"] = df.apply(lambda x: self.get_sell_at_top_buy_bottom_label(x), axis=1)
-        df["sell_at_top_label"] = df.apply(lambda x: self.get_sell_at_top_label(x), axis=1)
-        df["sell_at_bottom_label"] = df.apply(lambda x: self.get_sell_at_bottom_label(x), axis=1)
-        df["sell_at_top_botton_label"] = -df["is_top_or_bottom"]
-
-        string_method_map = {
-            "buy_at_top": self.buy_at_top,
-            "buy_at_buttom": self.buy_at_buttom,
-            "sell_at_top": self.sell_at_top,
-            "sell_at_bottom": self.sell_at_bottom,
-            "buy_at_top_bottom": self.buy_at_top_bottom,
-            "sell_at_top_botton": self.sell_at_top_botton,
-            "buy_at_top_sell_botton": self.buy_at_top_sell_botton,
-            "sell_at_top_buy_bottom": self.sell_at_top_buy_bottom
-        }
-        return string_method_map[method_string](df, window)
+        df = get_df_label(df, window)
+        return self.trade_at_method_string(df, window, method_string)
 
     def main(self):
         df = self.get_data()
         names = df.name.unique().tolist()
         evaluate_result = []
-        names = ["USDCAD"]
         start_time = time.time()
-        for name in names:
+        method_strings = ["buy_at_top", "buy_at_buttom", "sell_at_top",
+                          "sell_at_bottom", "buy_at_top_bottom", "sell_at_top_botton",
+                          "buy_at_top_sell_botton", "sell_at_top_buy_bottom"]
+        logger.info({"names": len(names)})
+        for name in tqdm(names):
+            futures = []
             df_name = df.loc[df.name == name]
             hours = df_name.hour.unique().tolist()
-            # hours = [0]
             for hour in hours:
                 df_hour = df_name.loc[df_name.hour == hour]
                 if len(df_hour) > 100:
                     for windows in range(2, 30):
-                        result = self.get_profit(df_hour.copy(deep=True), windows)
-                        print(result)
-                        for method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe in result:
+                        df_label = get_df_label(df_hour, windows)
+                        for method_string in method_strings:
+                            method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe, _ = self.trade_at_method_string(
+                                df_label.copy(deep=True), windows, method_string)
+                            logger.info((method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe))
                             evaluate_result.append(
                                 [name, hour, windows, method_string, profit, accu_returns, annu_returns, max_drawdown,
                                  sharpe])
         end_time = time.time()
         print(f"cost {end_time - start_time} run get_profit")
-        evaluate_result_df = pd.DataFrame(evaluate_result, columns=["name", "hour", "windows", 'method_string',
+        evaluate_result_df = pd.DataFrame(evaluate_result, columns=["code", "hour", "windows", 'method_string',
                                                                     'profit', 'accu_returns', 'annu_returns',
                                                                     'max_drawdown', 'sharpe'])
         evaluate_result_df = evaluate_result_df.sort_values(by="sharpe", ascending=False)
-        evaluate_result_df.to_csv("evaluate_result2.csv", index=False)
+        evaluate_result_df.to_csv("evaluate_result.csv", index=False)
+
+    def get_best_portfolio(self):
+        df = pd.read_csv(r"D:\workspace\qtrade\src\qtrade\evaluate_result2.csv")
+        # names = ["CADCHF", "CADCHF", "CADCHF", "EURCHF", "EURCAD", "USDJPY", "GBPCAD", "DXY", "USDCAD", "USDCHF", "GBPNZD", "US30", "EURAUD", "AUDCAD"]
+        # df = df[df.name.isin(names)]
+        # not_name = ["USOIL", "AUDUSD", "BTCUSD", "XAUUSD", "XAUUSD", "AUDNZD", "AUDJPY", "EURJPY", "GBPAUD", "US500",
+        #             "GBPCHF", "GBPJPY", "GBPJPY", "GBPCAD"]
+        # names = [ele for ele in df.name.unique().tolist() if ele not in not_name]
+
+        names = ("GBPUSD", "DXY", "EURGBP", "USDCAD", "AUDCHF", "EURCHF", "EURCAD", "NZDCAD", "AUDNZD",
+                 "USDJPY", "GBPNZD", "AUDCAD", "GBPCAD", "GBPJPY", "CADCHF", "AUDUSD", "BTCUSD")
+        df = df[df.code.isin(names)]
+        df_data = self.get_data()
+        all_dfs = []
+        for index, row in tqdm(df.iterrows()):
+            name, hour, windows, method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe = row.to_list()
+            df_name = df_data.loc[df_data.name == name]
+            df_hour = df_name.loc[df_name.hour == hour]
+            df_hour = get_df_label(df_hour, windows)
+            method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe, df_profit = self.trade_at_method_string(
+                df_hour, windows, method_string)
+            df_profit["name"] = name
+            df_profit["datetime"] = df_profit["datetime"].map(lambda x: x.strftime("%Y-%m-%d"))
+            all_dfs.append(df_profit)
+        df = pd.concat(all_dfs, axis=0)
+        df = df.pivot(index="datetime", columns="name", values="increase_rate")
+        df.to_csv("temp.csv")
+        df = df.replace([np.inf, -np.inf], np.nan)
+        df = df.dropna(axis=0, how="any")
+        print(df.isna().sum())
+        port = rp.Portfolio(returns=df)
+        method_mu = 'hist'  # Method to estimate expected returns based on historical data.
+        method_cov = 'hist'
+        port.assets_stats(method_mu=method_mu, method_cov=method_cov)
+        model = 'Classic'
+        rm = 'MV'
+        obj = 'Sharpe'
+        hist = True
+        rf = 0
+        l = 0
+        w = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist)
+        w = w.sort_values(by="weights", ascending=False)
+        w["name"] = w.index
+        print(w)
+        print(dict(w[["name", "weights"]].values.tolist()))
+        w.to_csv("portfolio_w.csv", index=False)
+
+        df.index = pd.to_datetime(df.index)
+        df["portfolio"] = 0
+        for k, v in w.to_dict()["weights"].items():
+            df["portfolio"] = df["portfolio"] + v * df[k] * 100
+
+        def calc_indicators(df_returns):
+            accu_returns = empyrical.cum_returns_final(df_returns)
+            annu_returns = empyrical.annual_return(df_returns)
+            max_drawdown = empyrical.max_drawdown(df_returns)
+            sharpe = empyrical.sharpe_ratio(df_returns)
+            return accu_returns, annu_returns, max_drawdown, sharpe
+
+        accu_returns, annu_returns, max_drawdown, sharpe = calc_indicators(df["portfolio"])
+        print(accu_returns, annu_returns, max_drawdown, sharpe)
+        (df["portfolio"] + 1).cumprod().plot(figsize=(15, 5))
+        import matplotlib.pylab as plt
+        plt.show()
 
     def get_portfolio(self):
         df_data = self.get_data_from_mysql()
@@ -260,17 +248,36 @@ class TradeSystem():
             return accu_returns, annu_returns, max_drawdown, sharpe
 
         accu_returns, annu_returns, max_drawdown, sharpe = calc_indicators(df["portfolio"])
+        df["date"] = df.index.map(lambda x: x.strftime("%Y-%m-%d"))
+        logger.info(
+            {"accu_returns, annu_returns, max_drawdown, sharpe": (accu_returns, annu_returns, max_drawdown, sharpe)})
+        df["portfolio"] = df["portfolio"]
         return df, self.portfolio_weight
-        # print(accu_returns, annu_returns, max_drawdown, sharpe)
-        # (df["portfolio"] + 1).cumprod().plot(figsize=(15, 5))
-        # import matplotlib.pylab as plt
-        # plt.show()
 
 
 if __name__ == '__main__':
     import time
+
     start_time = time.time()
     trade_system = TradeSystem()
-    trade_system.get_portfolio()
+    df, _ = trade_system.get_portfolio()
     end_time = time.time()
-    print(end_time-start_time)
+    print(end_time - start_time)
+
+    df: pd.DataFrame = df.sort_values(by="date", ascending=True)
+    # df = df.tail(100)
+    print({"df": df})
+    data = df[['date', 'portfolio']].values.tolist()
+    sql = """replace into mt5.ads_forex_portfolio_rpt
+             values (%s, %s)
+    """
+    insert_table_by_batch(sql, data)
+
+    # 权重
+    # df = pd.read_csv(r"D:\workspace\qtrade\src\qtrade\evaluate_result2.csv")
+    # df = df[df.code.isin([ele for ele in trade_system.portfolio_weight])]
+    # data = df.values.tolist()
+    # sql = """replace into mt5.ads_forex_best_param
+    #          values (%s, %s,%s, %s,%s, %s,%s, %s,%s)
+    # """
+    # insert_table_by_batch(sql, data)
