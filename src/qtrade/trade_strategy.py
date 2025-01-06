@@ -272,7 +272,7 @@ if __name__ == '__main__':
              values (%s, %s)
     """
     insert_table_by_batch(sql, data)
-
+    
     # 权重
     # df = pd.read_csv(r"D:\workspace\qtrade\src\qtrade\evaluate_result2.csv")
     # df = df[df.code.isin([ele for ele in trade_system.portfolio_weight])]

@@ -5,7 +5,7 @@ from streamlit_echarts import st_echarts
 import empyrical
 import os
 from trade_strategy import TradeSystem
-
+from mysql_util import *
 pymysql.install_as_MySQLdb()
 
 
@@ -34,13 +34,19 @@ def forex_portfolio_strategy():
     st.cache_resource.clear()
     st.markdown("## 无双投资策略")
 
-    Y, portfolio_weight = trade_system.get_portfolio()
-    Y["date"] = Y.index.map(lambda x: x.strftime("%Y-%m-%d"))
+    with get_connection() as cursor:
+        sql = """
+        select date, increase_rate 
+        from mt5.ads_forex_portfolio_rpt
+        order by date
+        """
+        cursor.execute(sql)
+        data = cursor.fetchall()
+    
+    Y = pd.DataFrame(data, columns=["date", "portfolio"])
     Y["portfolio"] = Y["portfolio"] * 100
-    Y.to_csv("temp.csv", index=False)
-    options_code = list(portfolio_weight.keys())
-    for element in options_code:
-        Y[element] = Y[element] * 100
+
+
     min_date = Y.date.min()
     max_date = Y.date.max()
     df_portfolio = Y
