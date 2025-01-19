@@ -28,7 +28,7 @@ empyrical==0.5.5
 #nnxruntime==1.17.0
 #torch
 #transformers==4.35.2
-#Riskfolio-Lib==5.0.1
+Riskfolio-Lib==5.0.1
 #pytdx
 #optuna==3.4.0
 #duckdb
