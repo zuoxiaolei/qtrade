@@ -1,3 +1,4 @@
 /src/qtrade/.streamlit/
 .streamlit
-
+__pycache__/
+/src/qtrade/__pycache__/
