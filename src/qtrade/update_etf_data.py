@@ -9,6 +9,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 import requests
 import tqdm
+from etf_trend_strategy import get_etf_matchless_report
 
 thread_num = 10
 tz = pytz.timezone('Asia/Shanghai')
@@ -203,11 +204,17 @@ def get_portfolio_report():
 
 
 def run_every_day():
+    # 更新etf数据
     update_etf_history_data()
+    # 更新日期
     update_trade_date()
+    # 更新投资组合策略
     get_portfolio_report()
+    # 更新无双策略结果
+    get_etf_matchless_report()
 
 
 if __name__ == "__main__":
-    update_etf_history_data(full=False)
+    # update_etf_history_data(full=False)
     # get_all_fund_scale()
+    run_every_day()

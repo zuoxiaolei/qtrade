@@ -1,8 +1,5 @@
 import pandas as pd
-import time
 import empyrical
-from tqdm import tqdm
-import riskfolio as rp
 import numpy as np
 from mysql_util import *
 
@@ -263,28 +260,14 @@ class TradeSystem():
         print(accu_returns, annu_returns, max_drawdown, sharpe)
         return df
 
-        # (df["portfolio"] + 1).cumprod().plot(figsize=(15, 5))
-        # import matplotlib.pylab as plt
-        # plt.show()
 
-
-if __name__ == '__main__':
+def get_etf_matchless_report():
     trade_system = TradeSystem()
-    # trade_system.get_portfolio()
-
-    # df = pd.read_csv("evaluate_result2.csv")
-    # df.code = df.code.map(str)
-    # codes = [ele for ele in weight]
-    # df = df[df.code.isin(codes)]
-    #
-    # data = df.values.tolist()
-    # sql = """
-    # replace into etf.ads_etf_best_param
-    # values (%s, %s, %s, %s, %s, %s, %s, %s)
-    # """
-    # insert_table_by_batch(data=data, sql=sql)
     df = trade_system.get_portfolio()
     df["date"] = df.index.map(lambda x: x.strftime("%Y-%m-%d"))
     data = df[["date", "portfolio"]].values.tolist()
     insert_table_by_batch("replace into etf.ads_matchless_portfolio_rpt values (%s, %s)", data)
-    
+
+
+if __name__ == '__main__':
+    get_etf_matchless_report()
