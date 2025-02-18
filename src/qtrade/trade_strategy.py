@@ -44,15 +44,7 @@ def get_df_label(df, windows):
 
 class TradeSystem():
     def __init__(self):
-        self.portfolio_weight = {'AUDNZD': 0.12606726752931557, 'EURCAD': 0.08747526071925517,
-                                 'EURGBP': 0.08462258293763082, 'DXY': 0.07757021813635603,
-                                 'AUDCAD': 0.07467805975170688, 'USDJPY': 0.07140132295624485,
-                                 'GBPUSD': 0.06767056753692635, 'CADCHF': 0.06521575381635387,
-                                 'USDCAD': 0.06087621036071191, 'NZDCAD': 0.052007894006455474,
-                                 'AUDCHF': 0.04547605441015359, 'EURCHF': 0.041580588724947125,
-                                 'GBPNZD': 0.037051046422949103, 'GBPJPY': 0.03573278747431265,
-                                 'GBPCAD': 0.031803340687778306, 'AUDUSD': 0.03128115132148332,
-                                 'BTCUSD': 0.009489893207419229}
+        self.portfolio_weight = {'XAUUSD': 1.0}
 
     def get_data(self):
         df = pd.read_parquet(r"D:\workspace\strategy\df_full_1h.parquet")

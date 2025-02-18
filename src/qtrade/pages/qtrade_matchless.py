@@ -44,7 +44,7 @@ def forex_portfolio_strategy():
         data = cursor.fetchall()
     
     Y = pd.DataFrame(data, columns=["date", "portfolio"])
-    Y["portfolio"] = Y["portfolio"] * 100
+    Y["portfolio"] = Y["portfolio"] * 10
 
 
     min_date = Y.date.min()
