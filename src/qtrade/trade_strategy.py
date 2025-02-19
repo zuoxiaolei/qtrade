@@ -44,7 +44,7 @@ def get_df_label(df, windows):
 
 class TradeSystem():
     def __init__(self):
-        self.portfolio_weight = {'XAUUSD': 1.0}
+        self.portfolio_weight = {'USDCAD': 1.0}
 
     def get_data(self):
         df = pd.read_parquet(r"D:\workspace\strategy\df_full_1h.parquet")
