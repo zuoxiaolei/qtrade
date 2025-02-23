@@ -113,6 +113,7 @@ class TradeSystem():
     def main(self):
         df = self.get_data()
         names = df.name.unique().tolist()
+        # names = ["XAUUSD"]
         evaluate_result = []
         start_time = time.time()
         method_strings = ["buy_at_top", "buy_at_buttom", "sell_at_top",
@@ -120,7 +121,6 @@ class TradeSystem():
                           "buy_at_top_sell_botton", "sell_at_top_buy_bottom"]
         logger.info({"names": len(names)})
         for name in tqdm(names):
-            futures = []
             df_name = df.loc[df.name == name]
             hours = df_name.hour.unique().tolist()
             for hour in hours:
@@ -144,16 +144,16 @@ class TradeSystem():
         evaluate_result_df.to_csv("evaluate_result.csv", index=False)
 
     def get_best_portfolio(self):
-        df = pd.read_csv(r"D:\workspace\qtrade\src\qtrade\evaluate_result2.csv")
+        df = pd.read_csv(r"C:\Users\Administrator\Desktop\qtrade\src\qtrade\select_codes.csv")
         # names = ["CADCHF", "CADCHF", "CADCHF", "EURCHF", "EURCAD", "USDJPY", "GBPCAD", "DXY", "USDCAD", "USDCHF", "GBPNZD", "US30", "EURAUD", "AUDCAD"]
         # df = df[df.name.isin(names)]
         # not_name = ["USOIL", "AUDUSD", "BTCUSD", "XAUUSD", "XAUUSD", "AUDNZD", "AUDJPY", "EURJPY", "GBPAUD", "US500",
         #             "GBPCHF", "GBPJPY", "GBPJPY", "GBPCAD"]
         # names = [ele for ele in df.name.unique().tolist() if ele not in not_name]
 
-        names = ("GBPUSD", "DXY", "EURGBP", "USDCAD", "AUDCHF", "EURCHF", "EURCAD", "NZDCAD", "AUDNZD",
-                 "USDJPY", "GBPNZD", "AUDCAD", "GBPCAD", "GBPJPY", "CADCHF", "AUDUSD", "BTCUSD")
+        names = ("AUDCHF", "GBPCAD", "USDCAD")
         df = df[df.code.isin(names)]
+
         df_data = self.get_data()
         all_dfs = []
         for index, row in tqdm(df.iterrows()):
@@ -192,7 +192,7 @@ class TradeSystem():
         df.index = pd.to_datetime(df.index)
         df["portfolio"] = 0
         for k, v in w.to_dict()["weights"].items():
-            df["portfolio"] = df["portfolio"] + v * df[k] * 100
+            df["portfolio"] = df["portfolio"] + v * df[k]
 
         def calc_indicators(df_returns):
             accu_returns = empyrical.cum_returns_final(df_returns)
@@ -248,6 +248,21 @@ class TradeSystem():
 
 
 if __name__ == '__main__':
+    # trade_system = TradeSystem()
+    # # trade_system.get_best_portfolio()
+    # df = trade_system.get_data()
+    # df_name = df.loc[df.name == "USDCAD"]
+    # df_hour = df_name.loc[df_name.hour == 15]
+    # df_label = get_df_label(df_hour, 4)
+    # method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe, df_profit = trade_system.trade_at_method_string(
+    #     df_hour, 4, "sell_at_top_buy_bottom")
+    # df_tmp = (df_profit["increase_rate"].tail(120)*10 + 1).cumprod()
+    # df_tmp.plot(figsize=(15, 5))
+    # print(df_tmp)
+    # print(method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe, df_profit)
+    # import matplotlib.pylab as plt
+    # plt.show()
+
     import time
 
     start_time = time.time()
@@ -261,15 +276,6 @@ if __name__ == '__main__':
     print({"df": df})
     data = df[['date', 'portfolio']].values.tolist()
     sql = """replace into mt5.ads_forex_portfolio_rpt
-             values (%s, %s)
-    """
+                 values (%s, %s)
+        """
     insert_table_by_batch(sql, data)
-    
-    # 权重
-    # df = pd.read_csv(r"D:\workspace\qtrade\src\qtrade\evaluate_result2.csv")
-    # df = df[df.code.isin([ele for ele in trade_system.portfolio_weight])]
-    # data = df.values.tolist()
-    # sql = """replace into mt5.ads_forex_best_param
-    #          values (%s, %s,%s, %s,%s, %s,%s, %s,%s)
-    # """
-    # insert_table_by_batch(sql, data)
