@@ -4,9 +4,6 @@ import numpy as np
 from mysql_util import *
 
 CLOSE_NAME = "close"
-weight = {'512690': 0.2534386069177697, '159632': 0.19455239012637038, '513660': 0.15975224413478367,
-          '510880': 0.08285366080880825, '513500': 0.078776175845003, '512290': 0.07801606135486173,
-          '159869': 0.06639370117394562, '515050': 0.04373830188635165, '516970': 0.04247885775210589}
 
 
 class TradeSystem():
@@ -14,7 +11,7 @@ class TradeSystem():
         pass
 
     def get_data(self):
-        sql = """select t1.*
+        sql = """select t1.code, t1.date, t1.open, t1.high, t1.low, t1.close, t1.volume
             from etf.ods_etf_history t1
             join (
             select distinct a.code
@@ -214,6 +211,72 @@ class TradeSystem():
         evaluate_result_df = evaluate_result_df.sort_values(by="sharpe", ascending=False)
         evaluate_result_df.to_csv("evaluate_result2.csv", index=False)
 
+    def get_portfolio_offline(self):
+        import riskfolio as rp
+        df = pd.read_csv(r"C:\Users\Administrator\Desktop\qtrade\src\qtrade\evaluate_result2.csv")
+        df["code"] = df["code"].map(str)
+        df = df.groupby("code").head(1)
+        df = df.head(10)
+        codes = df["code"].unique().tolist()
+        codes = {'513100': 0.5120957375357787, '512760': 0.18270025845481602, '515050': 0.1287995822667242,
+                 '510180': 0.11611151599850926, '159633': 0.0602929057441718}
+        codes = [ele for ele in codes]
+        df_data = self.get_data()
+        df_data = df_data[df_data.code.isin(codes)]
+        all_dfs = []
+
+        for index, row in tqdm(df.iterrows()):
+            code, windows, method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe = row.to_list()
+            code = str(code)
+            df_name = df_data.loc[df_data.code == code]
+            method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe, df_profit = self.get_profit_by_method(
+                df_name, windows, method_string)
+            df_profit["code"] = code
+            df_profit["datetime"] = df_profit["datetime"].map(lambda x: x.strftime("%Y-%m-%d"))
+            all_dfs.append(df_profit)
+            print(df_profit)
+
+        df = pd.concat(all_dfs, axis=0)
+        df = df.pivot(index="datetime", columns="code", values="increase_rate")
+        df = df.dropna(axis=0, how="any")
+        df = df.replace([np.inf, -np.inf], np.nan)
+
+        port = rp.Portfolio(returns=df)
+        method_mu = 'hist'  # Method to estimate expected returns based on historical data.
+        method_cov = 'hist'
+        port.assets_stats(method_mu=method_mu, method_cov=method_cov)
+        model = 'Classic'
+        rm = 'MV'
+        obj = 'Sharpe'
+        hist = True
+        rf = 0
+        l = 0
+        w = port.optimization(model=model, rm=rm, obj=obj, rf=rf, l=l, hist=hist)
+        w = w.sort_values(by="weights", ascending=False)
+        w["name"] = w.index
+        print(w)
+        print(dict(w[["name", "weights"]].values.tolist()))
+        w.to_csv("portfolio_w.csv", index=False)
+
+        df.index = pd.to_datetime(df.index)
+        df["portfolio"] = 0
+        w = w.to_dict()["weights"]
+        for k, v in w.items():
+            df["portfolio"] = df["portfolio"] + v * df[k]
+        print(df.tail())
+
+        def calc_indicators(df_returns):
+            accu_returns = empyrical.cum_returns_final(df_returns)
+            annu_returns = empyrical.annual_return(df_returns)
+            max_drawdown = empyrical.max_drawdown(df_returns)
+            sharpe = empyrical.sharpe_ratio(df_returns)
+            return accu_returns, annu_returns, max_drawdown, sharpe
+
+        accu_returns, annu_returns, max_drawdown, sharpe = calc_indicators(df["portfolio"])
+        print(accu_returns, annu_returns, max_drawdown, sharpe)
+        df.to_csv("temp.csv", index=True)
+        return df
+
     def get_portfolio(self):
         with get_connection() as cursor:
             sql = """select * from etf.ads_etf_best_param"""
@@ -247,7 +310,6 @@ class TradeSystem():
         df["portfolio"] = 0
         for k, v in w.items():
             df["portfolio"] = df["portfolio"] + v * df[k]
-        print(df.tail())
 
         def calc_indicators(df_returns):
             accu_returns = empyrical.cum_returns_final(df_returns)
@@ -258,6 +320,7 @@ class TradeSystem():
 
         accu_returns, annu_returns, max_drawdown, sharpe = calc_indicators(df["portfolio"])
         print(accu_returns, annu_returns, max_drawdown, sharpe)
+        # df.to_csv("temp.csv", index=True)
         return df
 
 
@@ -265,9 +328,33 @@ def get_etf_matchless_report():
     trade_system = TradeSystem()
     df = trade_system.get_portfolio()
     df["date"] = df.index.map(lambda x: x.strftime("%Y-%m-%d"))
-    data = df[["date", "portfolio"]].values.tolist()
-    insert_table_by_batch("replace into etf.ads_matchless_portfolio_rpt values (%s, %s)", data)
+    data = df[["date", "513100", "512760", "515050", "510180", "159633", "portfolio"]].values.tolist()
+    insert_table_by_batch("""replace into etf.ads_matchless_portfolio_rpt(`date`,
+     `513100`,
+      `512760`, 
+      `515050`, 
+      `510180`,
+       `159633`,
+       increase_rate) 
+    values (%s, %s, %s, %s, %s, %s, %s)""", data)
+
+
+def write_weight():
+    code_weight = {'513100': 0.5120957375357787, '512760': 0.18270025845481602, '515050': 0.1287995822667242,
+                   '510180': 0.11611151599850926, '159633': 0.0602929057441718}
+    df = pd.read_csv(r"C:\Users\Administrator\Desktop\qtrade\src\qtrade\evaluate_result2.csv")
+    df["code"] = df["code"].map(str)
+    df = df.groupby("code").head(1)
+    df = df.head(10)
+    df = df[df.code.isin([ele for ele in code_weight])]
+    data = []
+    for index, row in tqdm(df.iterrows()):
+        code, windows, method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe = row.to_list()
+        weight = code_weight[code]
+        data.append([code, windows, method_string, profit, accu_returns, annu_returns, max_drawdown, sharpe, weight])
+    insert_table_by_batch("replace into etf.ads_etf_best_param values (%s, %s,%s, %s,%s, %s,%s, %s,%s)", data)
 
 
 if __name__ == '__main__':
     get_etf_matchless_report()
+    # trade_system = TradeSystem()

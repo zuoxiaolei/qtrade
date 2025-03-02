@@ -18,9 +18,8 @@ thread_num = 10
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"}
 
-weight = {'512690': 0.2534386069177697, '159632': 0.19455239012637038, '513660': 0.15975224413478367,
-          '510880': 0.08285366080880825, '513500': 0.078776175845003, '512290': 0.07801606135486173,
-          '159869': 0.06639370117394562, '515050': 0.04373830188635165, '516970': 0.04247885775210589}
+weight = {'513100': 0.5120957375357787, '512760': 0.18270025845481602, '515050': 0.1287995822667242,
+          '510180': 0.11611151599850926, '159633': 0.0602929057441718}
 
 
 @retrying.retry(stop_max_attempt_number=10, stop_max_delay=10000)
@@ -88,7 +87,7 @@ def get_etf_codes():
 
 
 @time_cost
-def update_etf_history_data(full=False):
+def update_etf_history_data(full=True):
     # codes = get_etf_codes()
     codes1 = ['518880', '512890', '159941']
     codes2 = [ele for ele in weight]
