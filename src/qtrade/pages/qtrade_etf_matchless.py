@@ -40,7 +40,7 @@ def forex_portfolio_strategy():
     #     Y["portfolio"] = Y["portfolio"] + v * Y[k]
     #
     # Y["portfolio"] = Y["portfolio"] * 100
-    Y = mysql_conn.query("select * from etf.ads_matchless_portfolio_rpt order by date", ttl=ttl)
+    Y = mysql_conn.query("select date, increase_rate from etf.ads_matchless_portfolio_rpt order by date", ttl=ttl)
     Y.columns = ["date", "portfolio"]
 
     min_date = Y.date.min()
