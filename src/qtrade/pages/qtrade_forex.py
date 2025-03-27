@@ -8,10 +8,8 @@ import numpy as np
 
 pymysql.install_as_MySQLdb()
 
-weight = {'DXY': 0.29626979230228107, 'AUDNZD': 0.1848405577106816, 'NZDUSD': 0.18164172656036354,
-          'EURAUD': 0.1776136647994698, 'GBPUSD': 0.04695695190808441, 'XAUUSD': 0.04475625443132315,
-          'USDCAD': 0.027912885344137175, 'CHFJPY': 0.02585617088206288, 'CHFSGD': 0.011061308642667737,
-          'AUDUSD': 0.0030906500367843164}
+weight = {'USDCAD': 0.34320520697416157, 'XAUUSD': 0.21807722140175975, 'USDJPY': 0.18639440860466022,
+         'GBPNZD': 0.11574647577618873, 'EURGBP': 0.06440337294272794, 'USTEC': 0.049389729562639234}
 
 ttl = 600
 height = 740
@@ -53,7 +51,7 @@ def forex_portfolio_strategy():
     for k, v in weight.items():
         Y["portfolio"] = Y["portfolio"] + v * Y[k]
 
-    Y["portfolio"] = Y["portfolio"] * 100
+    Y["portfolio"] = Y["portfolio"] * 10
     min_date = Y.date.min()
     max_date = Y.date.max()
     print(min_date, max_date)
