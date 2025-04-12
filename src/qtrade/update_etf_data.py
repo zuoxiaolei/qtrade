@@ -201,6 +201,29 @@ def get_portfolio_report():
     '''
     insert_table_by_batch(sql, df_month.values.tolist())
 
+def get_gongmu_history(thread_num):
+    codes =  {'000218': 0.5326214751170469, '005561': 0.20547690045468442, '162411': 0.11246048643186914, '161128': 0.11096135030886262, '001323': 0.03847978768753706}
+    codes = [ele for ele in codes]
+    def get_history_df(code):
+        try:
+            fund_open_fund_info_em_df = ak.fund_open_fund_info_em(symbol=code, indicator='累计净值走势')
+            fund_open_fund_info_em_df.columns = ['date', 'close']
+            fund_open_fund_info_em_df['code'] = code
+            fund_open_fund_info_em_df = fund_open_fund_info_em_df.dropna(axis=0)
+            data = fund_open_fund_info_em_df[["code", "date", "close"]].values.tolist()
+            sql = '''
+            replace into etf.ods_open_fund_history(code, date, close)
+            values (%s, %s, %s)
+            '''
+            insert_table_by_batch(sql, data)
+            time.sleep(5)
+        except:
+            import traceback
+            traceback.print_exc()
+            return None
+
+    with ThreadPoolExecutor(thread_num) as executor:
+        list(tqdm.tqdm(executor.map(get_history_df, codes), total=len(codes)))
 
 def run_every_day():
     # 更新etf数据
@@ -211,9 +234,11 @@ def run_every_day():
     get_portfolio_report()
     # 更新无双策略结果
     get_etf_matchless_report()
+    get_gongmu_history(10)
 
 
 if __name__ == "__main__":
     # update_etf_history_data(full=False)
     # get_all_fund_scale()
     run_every_day()
+    # get_gongmu_history(10)
