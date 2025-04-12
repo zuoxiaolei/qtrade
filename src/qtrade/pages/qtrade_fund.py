@@ -58,6 +58,23 @@ def forex_portfolio_strategy():
     options = [str(ele) for ele in options]
     options = options + ["all"]
 
+    st.title('资产分配计算器')
+    # 输入总金额
+    total_amount = st.number_input('请输入总金额:', value=100000)
+
+    # 计算并显示每个资产的分配金额
+    if total_amount > 0:
+        st.subheader('各资产分配金额:')
+        allocation = {asset: amount * total_amount for asset, amount in weight.items()}
+        
+        # 显示为列表
+        for asset, amount in allocation.items():
+            st.write(f"- {asset}: {amount:,.2f}")  # 格式化为两位小数并添加千位分隔符
+        
+        # 可选：显示为表格
+        st.subheader('分配结果表格:')
+        st.table(allocation)
+
     st.markdown("### 收益曲线")
     select_year = st.selectbox(label='年份', options=options, key=33)
     df_portfolio = Y
