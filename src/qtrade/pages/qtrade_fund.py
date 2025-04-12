@@ -8,8 +8,7 @@ import numpy as np
 
 pymysql.install_as_MySQLdb()
 
-weight =  {'000218': 0.5326214751170469, '005561': 0.20547690045468442, '162411': 0.11246048643186914, '161128': 0.11096135030886262, '001323': 0.03847978768753706}
-ttl = 600
+weight = {'000218': 0.5651906874989361, '005561': 0.22794952316726177, '161128': 0.16352612011356213, '001323': 0.04312437329389227}
 height = 740
 width = 800
 
@@ -39,7 +38,7 @@ def forex_portfolio_strategy():
     df = df.sort_values(by="date")
     df = df.loc[df.date.isin(time_set)]
     df = df.pivot(index="date", columns="code", values="close")
-    
+
     data = df.pct_change()
     data = data.replace([np.inf, -np.inf], np.nan)
     data.index = pd.to_datetime(data.index)

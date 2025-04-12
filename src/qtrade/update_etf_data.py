@@ -202,8 +202,7 @@ def get_portfolio_report():
     insert_table_by_batch(sql, df_month.values.tolist())
 
 def get_gongmu_history(thread_num):
-    codes =  {'000218': 0.5326214751170469, '005561': 0.20547690045468442, '162411': 0.11246048643186914, '161128': 0.11096135030886262, '001323': 0.03847978768753706}
-    codes = [ele for ele in codes]
+    codes =  {'000218': 0.5651906874989361, '005561': 0.22794952316726177, '161128': 0.16352612011356213, '001323': 0.04312437329389227}
     def get_history_df(code):
         try:
             fund_open_fund_info_em_df = ak.fund_open_fund_info_em(symbol=code, indicator='累计净值走势')
