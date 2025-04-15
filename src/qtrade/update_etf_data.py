@@ -18,8 +18,7 @@ thread_num = 10
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"}
 
-weight = {'513100': 0.5120957375357787, '512760': 0.18270025845481602, '515050': 0.1287995822667242,
-          '510180': 0.11611151599850926, '159633': 0.0602929057441718}
+weight = {'159937': 0.6972371117992344, '512800': 0.17269502746768678, '159941': 0.08448470460792684, '588200': 0.02964929553738995, '159636': 0.01593386058776203}
 
 
 @retrying.retry(stop_max_attempt_number=10, stop_max_delay=10000)
@@ -201,28 +200,6 @@ def get_portfolio_report():
     '''
     insert_table_by_batch(sql, df_month.values.tolist())
 
-def get_gongmu_history(thread_num):
-    codes =  {'000218': 0.5651906874989361, '005561': 0.22794952316726177, '161128': 0.16352612011356213, '001323': 0.04312437329389227}
-    def get_history_df(code):
-        try:
-            fund_open_fund_info_em_df = ak.fund_open_fund_info_em(symbol=code, indicator='累计净值走势')
-            fund_open_fund_info_em_df.columns = ['date', 'close']
-            fund_open_fund_info_em_df['code'] = code
-            fund_open_fund_info_em_df = fund_open_fund_info_em_df.dropna(axis=0)
-            data = fund_open_fund_info_em_df[["code", "date", "close"]].values.tolist()
-            sql = '''
-            replace into etf.ods_open_fund_history(code, date, close)
-            values (%s, %s, %s)
-            '''
-            insert_table_by_batch(sql, data)
-            time.sleep(5)
-        except:
-            import traceback
-            traceback.print_exc()
-            return None
-
-    with ThreadPoolExecutor(thread_num) as executor:
-        list(tqdm.tqdm(executor.map(get_history_df, codes), total=len(codes)))
 
 def run_every_day():
     # 更新etf数据
@@ -233,11 +210,10 @@ def run_every_day():
     get_portfolio_report()
     # 更新无双策略结果
     get_etf_matchless_report()
-    get_gongmu_history(10)
+    # get_gongmu_history(10)
 
 
 if __name__ == "__main__":
-    # update_etf_history_data(full=False)
+    # update_etf_history_data(full=True)
     # get_all_fund_scale()
     run_every_day()
-    # get_gongmu_history(10)

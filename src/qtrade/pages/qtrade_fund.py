@@ -8,7 +8,7 @@ import numpy as np
 
 pymysql.install_as_MySQLdb()
 
-weight = {'000218': 0.5651906874989361, '005561': 0.22794952316726177, '161128': 0.16352612011356213, '001323': 0.04312437329389227}
+weight = {'159937': 0.6972371117992344, '512800': 0.17269502746768678, '159941': 0.08448470460792684, '588200': 0.02964929553738995, '159636': 0.01593386058776203}
 ttl = 600
 height = 740
 width = 800
@@ -16,13 +16,15 @@ width = 800
 mysql_conn = st.connection('mysql', type='sql', ttl=ttl)
 max_date_sql = '''
                 select substring(max(date), 1, 10) date 
-                from etf.ods_open_fund_history
+                from etf.ods_etf_history
+                where code in ('159937', '512800', '159941', '588200', '159636')
                '''
 max_date = mysql_conn.query(max_date_sql, ttl=ttl).values.tolist()[0][0]
 
 data_sql = """
 select date, code, close
-from etf.ods_open_fund_history
+from etf.ods_etf_history
+where code in ('159937', '512800', '159941', '588200', '159636')
 order by date
 """
 
@@ -32,7 +34,7 @@ def forex_portfolio_strategy():
     st.cache_resource.clear()
     st.markdown("## 组合投资策略")
     df = mysql_conn.query(data_sql)
-    time_set = set(df.loc[df.code == "000218", 'date'].tolist())
+    time_set = set(df.loc[df.code == "159937", 'date'].tolist())
 
     for ele in weight:
         time_set = time_set.intersection(set(df.loc[df.code == ele, 'date'].tolist()))
@@ -51,6 +53,7 @@ def forex_portfolio_strategy():
         Y["portfolio"] = Y["portfolio"] + v * Y[k]
 
     Y["portfolio"] = Y["portfolio"]
+    print(Y)
     min_date = Y.date.min()
     max_date = Y.date.max()
     print(min_date, max_date)
