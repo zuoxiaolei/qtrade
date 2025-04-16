@@ -12,22 +12,23 @@ weight = {'511520': 0.5000532908066398, '159937': 0.3298573375952695,
             '512800': 0.08979038438576563, '159941': 0.04119632080743812, 
             '588200': 0.020569953909583803, '159636': 0.009720270945896708}
 
+codes_tuple = tuple(weight.keys())
 ttl = 600
 height = 740
 width = 800
 
 mysql_conn = st.connection('mysql', type='sql', ttl=ttl)
-max_date_sql = '''
+max_date_sql = f'''
                 select substring(max(date), 1, 10) date 
                 from etf.ods_etf_history
-                where code in ('159937', '512800', '159941', '588200', '159636')
+                where code in {str(codes_tuple)}
                '''
 max_date = mysql_conn.query(max_date_sql, ttl=ttl).values.tolist()[0][0]
 
-data_sql = """
+data_sql = f"""
 select date, code, close
 from etf.ods_etf_history
-where code in ('159937', '512800', '159941', '588200', '159636')
+where code in {str(codes_tuple)}
 order by date
 """
 
