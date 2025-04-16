@@ -18,7 +18,9 @@ thread_num = 10
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36"}
 
-weight = {'159937': 0.6972371117992344, '512800': 0.17269502746768678, '159941': 0.08448470460792684, '588200': 0.02964929553738995, '159636': 0.01593386058776203}
+weight = {'511520': 0.5000532908066398, '159937': 0.3298573375952695,
+            '512800': 0.08979038438576563, '159941': 0.04119632080743812, 
+            '588200': 0.020569953909583803, '159636': 0.009720270945896708}
 
 
 @retrying.retry(stop_max_attempt_number=10, stop_max_delay=10000)
@@ -217,3 +219,4 @@ if __name__ == "__main__":
     # update_etf_history_data(full=True)
     # get_all_fund_scale()
     run_every_day()
+    # update_etf_history_data(full=True)
