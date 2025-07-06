@@ -61,8 +61,10 @@ def create_table_if_not_exist():
             `now` double(255,0) DEFAULT NULL,
             `high` double(255,0) DEFAULT NULL,
             `low` double DEFAULT NULL,
-              PRIMARY KEY (`timestamp`,`code`),
-            KEY `code_idx` (`code`) USING BTREE
+            PRIMARY KEY (`timestamp`,`code`),
+            KEY `code_idx` (`code` DESC) USING BTREE,
+            KEY `timestamp_inx` (`timestamp` DESC) USING BTREE,
+            KEY `code_timestamp` (`timestamp` DESC,`code` DESC)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
             """
     with get_connection() as cursor:
@@ -85,7 +87,7 @@ def update_from_easyquotation():
     create_table_if_not_exist()
     today = datetime.today().strftime("%Y%m%d")
     sql = f"""
-    INSERT INTO stock.stock_price_real_time_{today} (
+    replace into stock.stock_price_real_time_{today} (
         `date`,
         `timestamp`,
         `code`,
