@@ -8,6 +8,7 @@ from datetime import datetime
 from loguru import logger
 import schedule
 from datetime import time as datetime_time
+from datetime import timedelta
 
 quotation = easyquotation.use('sina')
 
@@ -110,8 +111,29 @@ def job():
 
 
 
+def get_increase_max():
+    """获取涨停股票"""
+    now = datetime.now()
+    old_datetime = now-timedelta(days=7)
+    while old_datetime<=now:
+        date_str = old_datetime.strftime("%Y%m%d")
+        stock_zt_pool_em_df = ak.stock_zt_pool_em(date=date_str)
+        if stock_zt_pool_em_df.empty:
+            old_datetime = old_datetime+timedelta(days=1)
+            continue
+        stock_zt_pool_em_df = stock_zt_pool_em_df[["代码", "名称"]]
+        stock_zt_pool_em_df["date"] = old_datetime.strftime("%Y%m%d")
+        stock_zt_pool_em_df["date"] = old_datetime.strftime("%Y%m%d")
+        old_datetime = old_datetime+timedelta(days=1)
+        stock_zt_pool_em_df.columns = ["code", "name", "date"]
+        sql="""
+        replace into stock.stock_increase_max VALUES (%s, %s, %s)
+        """
+        insert_table_by_batch(sql, stock_zt_pool_em_df.values.tolist(), batch_size=1000)
+    logger.info(f"获取涨停股票{now}完成")
+
 def is_stock_trading_time():
-    now = datetime.datetime.now()
+    now = datetime.now()
     
     # 检查星期几（0-6，0是周一，6是周日）
     if now.weekday() >= 5:  # 5和6是周六和周日
@@ -123,10 +145,14 @@ def is_stock_trading_time():
     afternoon_close = datetime_time(15, 30)
     return morning_open <= current_time <= afternoon_close
 
-if __name__ == "__main__":
+
+def run():
     # 每分钟的第59秒执行job函数
     schedule.every().minute.at(":59").do(job)
+    schedule.every(1).hour.do(get_increase_max)
     while True:
         schedule.run_pending()
         time.sleep(1)
-    
+
+if __name__ == "__main__":
+    run()
