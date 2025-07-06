@@ -99,5 +99,5 @@ def get_stock():
         time.sleep(1)
 
 if __name__ == "__main__":
-    job()
+    get_stock()
     
