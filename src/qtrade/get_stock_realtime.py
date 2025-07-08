@@ -56,11 +56,11 @@ def create_table_if_not_exist():
             `timestamp` bigint NOT NULL,
             `code` varchar(255) NOT NULL,
             `name` varchar(255) DEFAULT NULL,
-            `open` double(255,0) DEFAULT NULL,
-            `close` double(255,0) DEFAULT NULL,
-            `now` double(255,0) DEFAULT NULL,
-            `high` double(255,0) DEFAULT NULL,
-            `low` double DEFAULT NULL,
+            `open` DOUBLE DEFAULT NULL,
+            `close` DOUBLE DEFAULT NULL,
+            `now` DOUBLE DEFAULT NULL,
+            `high` DOUBLE DEFAULT NULL,
+            `low` DOUBLE DEFAULT NULL,
             PRIMARY KEY (`timestamp`,`code`),
             KEY `code_idx` (`code` DESC) USING BTREE,
             KEY `timestamp_inx` (`timestamp` DESC) USING BTREE,
@@ -117,12 +117,21 @@ def get_increase_max():
     """获取涨停股票"""
     now = datetime.now()
     old_datetime = now-timedelta(days=7)
-    while old_datetime<=now:
+    df = ak.tool_trade_date_hist_sina()
+    trade_dates = set(df["trade_date"].tolist())
+    while old_datetime<now:
         date_str = old_datetime.strftime("%Y%m%d")
+        date_str2 = old_datetime.strftime("%Y-%m-%d")
+
+        if date_str2 not in trade_dates:
+            old_datetime = old_datetime+timedelta(days=1)
+            continue
+
         stock_zt_pool_em_df = ak.stock_zt_pool_em(date=date_str)
         if stock_zt_pool_em_df.empty:
             old_datetime = old_datetime+timedelta(days=1)
             continue
+
         stock_zt_pool_em_df = stock_zt_pool_em_df[["代码", "名称"]]
         stock_zt_pool_em_df["date"] = old_datetime.strftime("%Y%m%d")
         stock_zt_pool_em_df["date"] = old_datetime.strftime("%Y%m%d")
@@ -144,8 +153,13 @@ def is_stock_trading_time():
     # 检查时间是否在交易时间段内
     current_time = now.time()
     morning_open = datetime_time(9, 30)
-    afternoon_close = datetime_time(15, 30)
-    return morning_open <= current_time <= afternoon_close
+    morning_close = datetime_time(11, 30)
+    afternoon_open = datetime_time(13, 0)
+    afternoon_close = datetime_time(15, 0)
+    
+    # 上午交易时段或下午交易时段
+    return (morning_open <= current_time <= morning_close) or \
+           (afternoon_open <= current_time <= afternoon_close)
 
 
 def run():

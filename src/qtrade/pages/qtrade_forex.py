@@ -34,7 +34,7 @@ def forex_portfolio_strategy():
     st.cache_resource.clear()
     st.markdown("## 组合投资策略")
     df = mysql_conn.query(data_sql)
-    time_set = set(df.loc[df.code == "BTCUSD", 'date'].tolist())
+    time_set = set(df.loc[df.code == "USDCAD", 'date'].tolist())
 
     for ele in weight:
         time_set = time_set.intersection(set(df.loc[df.code == ele, 'date'].tolist()))
